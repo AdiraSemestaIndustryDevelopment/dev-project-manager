@@ -110,7 +110,7 @@
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged }
+import { getAuth, GoogleAuthProvider, signInWithRedirect, getRedirectResult, onAuthStateChanged }
   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
 const firebaseConfig = {
@@ -156,6 +156,35 @@ const btnLogin = document.getElementById('btnLogin');
 const errorBox = document.getElementById('errorBox');
 const loading  = document.getElementById('loadingOverlay');
 
+// Cek hasil redirect setelah kembali dari Google
+loading.classList.add('show');
+try {
+  const result = await getRedirectResult(auth);
+  if (result) {
+    const user = result.user;
+    const userInfo = USER_WHITELIST[user.email];
+    if (!userInfo) {
+      await auth.signOut();
+      loading.classList.remove('show');
+      errorBox.textContent = `Akses ditolak. Email "${user.email}" belum terdaftar. Hubungi Admin.`;
+      errorBox.classList.add('show');
+    } else {
+      sessionStorage.setItem('user_name', userInfo.name);
+      sessionStorage.setItem('user_role', userInfo.role);
+      sessionStorage.setItem('user_division', userInfo.division);
+      sessionStorage.setItem('user_email', user.email);
+      window.location.href = './dashboard/';
+    }
+  } else {
+    loading.classList.remove('show');
+  }
+} catch (err) {
+  loading.classList.remove('show');
+  errorBox.textContent = 'Login gagal: ' + err.message;
+  errorBox.classList.add('show');
+}
+
+// Cek jika sudah login sebelumnya
 onAuthStateChanged(auth, (user) => {
   if (user && USER_WHITELIST[user.email]) {
     loading.classList.add('show');
@@ -167,27 +196,11 @@ btnLogin.addEventListener('click', async () => {
   errorBox.classList.remove('show');
   loading.classList.add('show');
   try {
-    const result = await signInWithPopup(auth, provider);
-    const user = result.user;
-    const userInfo = USER_WHITELIST[user.email];
-    if (!userInfo) {
-      await auth.signOut();
-      loading.classList.remove('show');
-      errorBox.textContent = `Akses ditolak. Email "${user.email}" belum terdaftar. Hubungi Admin.`;
-      errorBox.classList.add('show');
-      return;
-    }
-    sessionStorage.setItem('user_name', userInfo.name);
-    sessionStorage.setItem('user_role', userInfo.role);
-    sessionStorage.setItem('user_division', userInfo.division);
-    sessionStorage.setItem('user_email', user.email);
-    window.location.href = './dashboard/';
+    await signInWithRedirect(auth, provider);
   } catch (err) {
     loading.classList.remove('show');
-    if (err.code !== 'auth/popup-closed-by-user') {
-      errorBox.textContent = 'Login gagal: ' + err.message;
-      errorBox.classList.add('show');
-    }
+    errorBox.textContent = 'Login gagal: ' + err.message;
+    errorBox.classList.add('show');
   }
 });
 </script>
