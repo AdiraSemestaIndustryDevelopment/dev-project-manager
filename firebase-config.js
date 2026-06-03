@@ -25,7 +25,7 @@ const VAPID_KEY = "GANTI_DENGAN_VAPID_KEY_ANDA";
 // ============================================================
 const USER_WHITELIST = {
   // ADMIN
-  "email.admin@gmail.com": { role: "admin", name: "Admin", division: "admin" },
+  "juanmarco@gmail.com": { role: "admin", name: "Juan", division: "admin" },
 
   // SALES (bisa input project baru)
   "jessie@gmail.com":   { role: "sales", name: "Jessie",  division: "Sales" },
