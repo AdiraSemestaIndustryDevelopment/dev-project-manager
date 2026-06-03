@@ -5,12 +5,12 @@
 // ============================================================
 
 const firebaseConfig = {
-  apiKey: "GANTI_DENGAN_API_KEY_ANDA",
-  authDomain: "GANTI_DENGAN_PROJECT_ID.firebaseapp.com",
-  projectId: "GANTI_DENGAN_PROJECT_ID",
-  storageBucket: "GANTI_DENGAN_PROJECT_ID.appspot.com",
-  messagingSenderId: "GANTI_DENGAN_MESSAGING_SENDER_ID",
-  appId: "GANTI_DENGAN_APP_ID"
+  apiKey: "AIzaSyDGZFjmudOI6Zy7vAYIYdSkQXJH2doMWnw",
+  authDomain: "dev-project-manager-6b170.firebaseapp.com",
+  projectId: "dev-project-manager-6b170",
+  storageBucket: "dev-project-manager-6b170.firebasestorage.app",
+  messagingSenderId: "233277446123",
+  appId: "1:233277446123:web:b805e1196ea3fce1c3ebae"
 };
 
 // VAPID Key untuk Push Notification (dari Firebase Cloud Messaging)
