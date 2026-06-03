@@ -598,11 +598,81 @@ import { getFirestore, collection, doc, addDoc, setDoc, getDoc, getDocs,
          updateDoc, query, where, orderBy, Timestamp, onSnapshot }
   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-// ── Load config ──────────────────────────────────────────────
-const configScript = document.createElement('script');
-configScript.src = '../firebase-config.js';
-document.head.appendChild(configScript);
-await new Promise(r => configScript.onload = r);
+// ── Config (embedded langsung) ───────────────────────────────
+const firebaseConfig = {
+  apiKey: "AIzaSyDGZFjmudOI6Zy7vAYIYdSkQXJH2doMWnw",
+  authDomain: "dev-project-manager-6b170.firebaseapp.com",
+  projectId: "dev-project-manager-6b170",
+  storageBucket: "dev-project-manager-6b170.firebasestorage.app",
+  messagingSenderId: "233277446123",
+  appId: "1:233277446123:web:b805e1196ea3fce1c3ebae"
+};
+
+const USER_WHITELIST = {
+  "juanmarconathaniel@gmail.com": { role: "admin", name: "Juan Marco", division: "admin" },
+  "jessie@gmail.com":   { role: "sales", name: "Jessie",  division: "Sales" },
+  "jessica@gmail.com":  { role: "sales", name: "Jessica", division: "Sales" },
+  "yunita@gmail.com":   { role: "sales", name: "Yunita",  division: "Sales" },
+  "anggita@gmail.com":  { role: "sales", name: "Anggita", division: "Sales" },
+  "feira@gmail.com":    { role: "pic", name: "Feira",   division: "Pre Production" },
+  "helda@gmail.com":    { role: "pic", name: "Helda",   division: "Pre Production" },
+  "anti@gmail.com":     { role: "pic", name: "Anti",    division: "Pre Production" },
+  "lanti@gmail.com":    { role: "pic", name: "Lanti",   division: "Pre Production" },
+  "tari@gmail.com":     { role: "pic", name: "Tari",    division: "Pre Production" },
+  "eki@gmail.com":      { role: "pic", name: "Eki",     division: "Pre Production" },
+  "rivaldi@gmail.com":  { role: "pic", name: "Rivaldi", division: "Pre Production" },
+  "wulan@gmail.com":    { role: "pic", name: "Wulan",   division: "Pre Production" },
+  "vanny@gmail.com":    { role: "pic", name: "Vanny", division: "Sample" },
+  "wiji@gmail.com":     { role: "pic", name: "Wiji",  division: "Sample" },
+  "yogi@gmail.com":     { role: "pic", name: "Yogi",  division: "Sample" },
+  "ase@gmail.com":      { role: "pic", name: "Ase",   division: "Sample" },
+  "reza@gmail.com":     { role: "pic", name: "Reza",  division: "Sample" },
+  "irene@gmail.com":    { role: "pic", name: "Irene",  division: "Sourcing" },
+  "dandi@gmail.com":    { role: "pic", name: "Dandi",   division: "Technical" },
+  "helmina@gmail.com":  { role: "pic", name: "Helmina", division: "Technical" },
+  "siska@gmail.com":    { role: "pic", name: "Siska", division: "Development" },
+  "dita@gmail.com":     { role: "sales", name: "Dita", division: "Sales" },
+};
+
+const TASK_DEFINITIONS = [
+  { id:"T01", name:"Email Approved", division:"Sales", pics:["Jessie","Jessica","Yunita","Anggita"], deadlineRule:{ label:"H+0 dari Email Approved" } },
+  { id:"T02", name:"Transfer Data", division:"Sales", pics:["Jessie","Jessica","Yunita","Anggita"], deadlineRule:{ label:"H+1 dari Email Approved" } },
+  { id:"T03", name:"Pembuatan Draft Sample", division:"Sample", pics:["Vanny","Wiji"], deadlineRule:{ label:"H+1 dari Email Approved" } },
+  { id:"T04", name:"Persiapan Material Approval Sheet", division:"Sample", pics:["Vanny","Wiji"], deadlineRule:{ label:"H+2 dari Transfer Data" } },
+  { id:"T05", name:"Pengajuan ID Master (Glove) Sales", division:"Sales", pics:["Jessica","Yunita","Anggita"], deadlineRule:{ label:"H+2 dari Transfer Data" } },
+  { id:"T06", name:"Pengajuan ID Master (Glove) Sourcing", division:"Sourcing", pics:["Irene"], deadlineRule:{ label:"H+2 dari Transfer Data" } },
+  { id:"T07", name:"Pengajuan ID Master (Glove) Pre Production", division:"Pre Production", pics:["Feira"], deadlineRule:{ label:"H+2 dari Transfer Data" } },
+  { id:"T08", name:"Pembuatan BOM", division:"Sales", pics:["Tari","Wulan"], deadlineRule:{ label:"H+3 dari Transfer Data" } },
+  { id:"T09", name:"Pembuatan Approval Sheet Accessories", division:"Development", pics:["Siska"], deadlineRule:{ label:"H+7 dari ID Master Glove" } },
+  { id:"T10", name:"Pembuatan Approval Sheet Material", division:"Development", pics:["Siska"], deadlineRule:{ label:"H+10 dari ID Master Glove" } },
+  { id:"T11", name:"Pembuatan Approval Sheet Accessories Packing", division:"Development", pics:["Siska"], deadlineRule:{ label:"H+14 dari ID Master Glove" } },
+  { id:"T12", name:"Pembuatan Cutting Detail", division:"Pre Production", pics:["Helda","Anti"], deadlineRule:{ label:"H+1 dari Transfer Data" } },
+  { id:"T13", name:"Penyerahan Pattern Cutting Dies", division:"Pre Production", pics:["Lanti"], deadlineRule:{ label:"H+2 dari Transfer Data" } },
+  { id:"T14", name:"Pembuatan Spec System (Glove)", division:"Pre Production", pics:["Helda"], deadlineRule:{ label:"H+3 dari Pembuatan BOM" } },
+  { id:"T15", name:"Pembuatan Glove Spec", division:"Pre Production", pics:["Helda","Anti"], deadlineRule:{ label:"H+7 dari Transfer Data" } },
+  { id:"T16", name:"Pembuatan SMV", division:"Pre Production", pics:["Tari","Eki"], deadlineRule:{ label:"H+2 dari Glove Spec" } },
+  { id:"T17", name:"Pembuatan SMV Asi Software", division:"Pre Production", pics:["Tari","Eki"], deadlineRule:{ label:"H+2 dari SMV" } },
+  { id:"T18", name:"Persiapan Material Running", division:"Sample", pics:["Vanny","Wiji"], deadlineRule:{ label:"H+2 dari BOM" } },
+  { id:"T19", name:"Ketersediaan Cutting Dies", division:"Pre Production", pics:["Lanti"], deadlineRule:{ label:"H+14 dari Transfer Data" } },
+  { id:"T20", name:"Pembuatan SPO", division:"Sales", pics:["Dita"], deadlineRule:{ label:"H+1 dari Spec System Glove" } },
+  { id:"T21", name:"Pembuatan SOC", division:"Sales", pics:["Dita"], deadlineRule:{ label:"H+2 dari Spec System Glove" } },
+  { id:"T22", name:"Tanggal Supply SPO Terdekat", division:"Sales", pics:["Jessica","Anggita","Yunita"], deadlineRule:{ label:"H+1 dari SPO & SOC" } },
+  { id:"T23", name:"Running + Validasi Glove Spec", division:"Technical", pics:["Dandi","Helmina"], deadlineRule:{ label:"H+7 dari Material Running" } },
+  { id:"T24", name:"Launching / PP Meeting", division:"Sales", pics:["Jessie","Jessica","Anggita","Yunita"], deadlineRule:{ label:"H+14 dari Transfer Data" } },
+  { id:"T25", name:"Email Permintaan Packing Spec", division:"Sales", pics:["Jessica","Anggita","Yunita"], deadlineRule:{ label:"H+0 input manual" } },
+  { id:"T26", name:"Pembuatan Packing Spec", division:"Pre Production", pics:["Rivaldi"], deadlineRule:{ label:"H+3 dari Email Packing Spec" } },
+  { id:"T27", name:"Confirm + Sebar Packing Spec", division:"Sales", pics:["Jessica","Anggita","Yunita"], deadlineRule:{ label:"H+7 dari Packing Spec" } },
+  { id:"T28", name:"Pengajuan ID Master (Packing) Sales", division:"Sales", pics:["Jessica","Anggita","Yunita"], deadlineRule:{ label:"H+2 dari Confirm Packing" } },
+  { id:"T29", name:"Pengajuan ID Master (Packing) Sourcing", division:"Sourcing", pics:["Irene"], deadlineRule:{ label:"H+2 dari Confirm Packing" } },
+  { id:"T30", name:"Pengajuan ID Master (Packing) Pre Production", division:"Pre Production", pics:["Feira"], deadlineRule:{ label:"H+2 dari Confirm Packing" } },
+  { id:"T31", name:"Pembuatan Spec System (Packing)", division:"Pre Production", pics:["Helda"], deadlineRule:{ label:"H+2 dari ID Master Packing" } },
+  { id:"T32", name:"Color Window", division:"Sales", pics:["Siska"], deadlineRule:{ label:"H+2 dari Material Approval Sheet" } },
+  { id:"T33", name:"Duplikat Sample", division:"Sample", pics:["Vanny","Wiji"], deadlineRule:{ label:"H+1 dari Email Approved" } },
+  { id:"T34", name:"Measurement", division:"Sample", pics:["Vanny","Wiji"], deadlineRule:{ label:"H+1 dari Email Approved" } },
+  { id:"T35", name:"Print Window", division:"Sample", pics:["Yogi"], deadlineRule:{ label:"H+5 dari Material Approval Sheet" } },
+  { id:"T36", name:"QA File", division:"Sample", pics:["Vanny","Wiji"], deadlineRule:{ label:"H+14 dari Transfer Data" } },
+  { id:"T37", name:"Setor Pattern ke Pre Production", division:"Sample", pics:["Ase","Reza"], deadlineRule:{ label:"H+1 dari Email Approved" } },
+];
 
 // ── Firebase init ────────────────────────────────────────────
 const app  = initializeApp(firebaseConfig);
