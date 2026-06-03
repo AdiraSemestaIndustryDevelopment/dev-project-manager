@@ -7,46 +7,35 @@
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
   :root {
-    --navy: #0B1628;
-    --navy-mid: #132040;
-    --navy-light: #1E3060;
-    --gold: #C9A84C;
-    --gold-light: #E8C97A;
-    --gold-dim: rgba(201,168,76,0.15);
-    --white: #F5F3EE;
-    --white-dim: rgba(245,243,238,0.07);
-    --white-mid: rgba(245,243,238,0.45);
-    --red: #C0392B;
+    --navy: #0B1628; --navy-mid: #132040; --gold: #C9A84C; --gold-light: #E8C97A;
+    --white: #F5F3EE; --white-dim: rgba(245,243,238,0.07); --white-mid: rgba(245,243,238,0.45);
   }
   *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
   html, body { height: 100%; background: var(--navy); color: var(--white); font-family: 'DM Sans', sans-serif; overflow: hidden; }
-  .bg { position: fixed; inset: 0; z-index: 0; background: radial-gradient(ellipse 80% 60% at 20% 110%, rgba(201,168,76,0.08) 0%, transparent 60%), radial-gradient(ellipse 60% 50% at 85% -10%, rgba(30,48,96,0.9) 0%, transparent 60%), linear-gradient(160deg, #0B1628 0%, #0F1E3A 50%, #0B1628 100%); }
+  .bg { position: fixed; inset: 0; z-index: 0; background: radial-gradient(ellipse 80% 60% at 20% 110%, rgba(201,168,76,0.08) 0%, transparent 60%), linear-gradient(160deg, #0B1628 0%, #0F1E3A 50%, #0B1628 100%); }
   .grid-lines { position: fixed; inset: 0; z-index: 0; background-image: linear-gradient(rgba(201,168,76,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(201,168,76,0.04) 1px, transparent 1px); background-size: 60px 60px; }
-  .orb { position: fixed; border-radius: 50%; filter: blur(80px); z-index: 0; animation: drift 12s ease-in-out infinite alternate; }
-  .orb-1 { width: 500px; height: 500px; top: -150px; right: -100px; background: rgba(19,32,64,0.6); }
-  .orb-2 { width: 300px; height: 300px; bottom: -80px; left: -60px; background: rgba(201,168,76,0.06); animation-delay: -4s; }
-  @keyframes drift { from { transform: translate(0,0) scale(1); } to { transform: translate(30px,20px) scale(1.05); } }
   .wrapper { position: relative; z-index: 1; height: 100vh; display: grid; grid-template-columns: 1fr 1fr; }
-  .left { display: flex; flex-direction: column; justify-content: center; padding: 80px 60px; border-right: 1px solid rgba(201,168,76,0.12); }
+  .left { display: flex; flex-direction: column; justify-content: center; padding: 80px 60px; border-right: 1px solid rgba(201,168,76,0.12); animation: fadeUp 0.8s ease both; }
   .logo-mark { display: flex; align-items: center; gap: 14px; margin-bottom: 64px; }
   .logo-icon { width: 42px; height: 42px; border: 1.5px solid var(--gold); display: grid; place-items: center; transform: rotate(45deg); }
   .logo-icon-inner { width: 16px; height: 16px; background: var(--gold); transform: rotate(-45deg); }
-  .logo-text { font-family: 'Cormorant Garamond', serif; font-size: 13px; font-weight: 400; letter-spacing: 0.35em; color: var(--gold); text-transform: uppercase; }
+  .logo-text { font-family: 'Cormorant Garamond', serif; font-size: 13px; letter-spacing: 0.35em; color: var(--gold); text-transform: uppercase; }
   .headline { font-family: 'Cormorant Garamond', serif; font-size: clamp(42px, 5vw, 68px); font-weight: 300; line-height: 1.05; margin-bottom: 28px; }
   .headline em { font-style: italic; color: var(--gold-light); }
   .subtext { font-size: 14px; font-weight: 300; color: var(--white-mid); line-height: 1.8; max-width: 380px; margin-bottom: 56px; }
   .divisions { display: flex; flex-wrap: wrap; gap: 8px; }
   .division-tag { font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; padding: 5px 12px; border: 1px solid rgba(201,168,76,0.2); color: var(--gold-light); opacity: 0.7; }
-  .right { display: flex; flex-direction: column; justify-content: center; padding: 80px 70px; }
+  .right { display: flex; flex-direction: column; justify-content: center; padding: 80px 70px; animation: fadeUp 0.8s ease 0.15s both; }
   .login-label { font-size: 10px; letter-spacing: 0.3em; text-transform: uppercase; color: var(--gold); margin-bottom: 32px; display: flex; align-items: center; gap: 12px; }
   .login-label::before { content: ''; display: block; width: 32px; height: 1px; background: var(--gold); }
   .login-title { font-family: 'Cormorant Garamond', serif; font-size: 36px; font-weight: 300; margin-bottom: 12px; }
   .login-sub { font-size: 13px; color: var(--white-mid); margin-bottom: 48px; font-weight: 300; }
-  .btn-google { display: flex; align-items: center; gap: 16px; background: var(--white-dim); border: 1px solid rgba(201,168,76,0.3); color: var(--white); font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 400; padding: 16px 24px; cursor: pointer; width: 100%; max-width: 340px; transition: all 0.25s ease; }
+  .btn-google { display: flex; align-items: center; gap: 16px; background: var(--white-dim); border: 1px solid rgba(201,168,76,0.3); color: var(--white); font-family: 'DM Sans', sans-serif; font-size: 14px; padding: 16px 24px; cursor: pointer; width: 100%; max-width: 340px; transition: all 0.25s ease; }
   .btn-google:hover { border-color: var(--gold); background: rgba(201,168,76,0.08); }
+  .btn-google:disabled { opacity: 0.5; cursor: not-allowed; }
   .divider { display: flex; align-items: center; gap: 16px; margin: 32px 0; max-width: 340px; color: var(--white-mid); font-size: 12px; }
   .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: rgba(255,255,255,0.08); }
-  .access-note { max-width: 340px; padding: 16px 20px; background: var(--white-dim); border-left: 2px solid var(--gold); font-size: 12px; color: var(--white-mid); line-height: 1.7; font-weight: 300; }
+  .access-note { max-width: 340px; padding: 16px 20px; background: var(--white-dim); border-left: 2px solid var(--gold); font-size: 12px; color: var(--white-mid); line-height: 1.7; }
   .access-note strong { color: var(--gold-light); font-weight: 500; }
   .error-box { display: none; max-width: 340px; margin-top: 20px; padding: 14px 18px; background: rgba(192,57,43,0.1); border: 1px solid rgba(192,57,43,0.4); font-size: 12px; color: #e07060; line-height: 1.6; }
   .error-box.show { display: block; }
@@ -55,25 +44,18 @@
   .spinner { width: 40px; height: 40px; border-radius: 50%; border: 1.5px solid rgba(201,168,76,0.2); border-top-color: var(--gold); animation: spin 0.8s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
   .loading-text { font-size: 12px; letter-spacing: 0.2em; color: var(--white-mid); }
-  .left, .right { animation: fadeUp 0.8s ease both; }
-  .right { animation-delay: 0.15s; }
   @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
   .footer-note { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); font-size: 10px; letter-spacing: 0.15em; color: rgba(245,243,238,0.18); white-space: nowrap; z-index: 1; }
   @media (max-width: 768px) { body { overflow: auto; } .wrapper { grid-template-columns: 1fr; } .left { display: none; } .right { padding: 60px 32px; min-height: 100vh; justify-content: center; } }
 </style>
 </head>
 <body>
-
 <div class="bg"></div>
 <div class="grid-lines"></div>
-<div class="orb orb-1"></div>
-<div class="orb orb-2"></div>
-
 <div class="loading-overlay" id="loadingOverlay">
   <div class="spinner"></div>
-  <div class="loading-text">MEMVERIFIKASI AKSES</div>
+  <div class="loading-text" id="loadingText">MEMVERIFIKASI AKSES</div>
 </div>
-
 <div class="wrapper">
   <div class="left">
     <div class="logo-mark">
@@ -83,15 +65,11 @@
     <h1 class="headline">Development<br><em>Project</em><br>Manager</h1>
     <p class="subtext">Platform terpusat untuk memantau, mengkoordinasi, dan mengakselerasi penyelesaian setiap task lintas divisi — real-time, transparan, dan akuntabel.</p>
     <div class="divisions">
-      <span class="division-tag">Sales</span>
-      <span class="division-tag">Pre Production</span>
-      <span class="division-tag">Sample</span>
-      <span class="division-tag">Sourcing</span>
-      <span class="division-tag">Technical</span>
-      <span class="division-tag">Development</span>
+      <span class="division-tag">Sales</span><span class="division-tag">Pre Production</span>
+      <span class="division-tag">Sample</span><span class="division-tag">Sourcing</span>
+      <span class="division-tag">Technical</span><span class="division-tag">Development</span>
     </div>
   </div>
-
   <div class="right">
     <div class="login-label">Akses Portal</div>
     <h2 class="login-title">Masuk ke Sistem</h2>
@@ -105,14 +83,11 @@
     <div class="error-box" id="errorBox"></div>
   </div>
 </div>
-
 <div class="footer-note">DEVELOPMENT PROJECT MANAGER &nbsp;·&nbsp; INTERNAL SYSTEM</div>
 
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getAuth, GoogleAuthProvider, signInWithRedirect, getRedirectResult, onAuthStateChanged }
-  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script>
 const firebaseConfig = {
   apiKey: "AIzaSyDGZFjmudOI6Zy7vAYIYdSkQXJH2doMWnw",
   authDomain: "dev-project-manager-6b170.firebaseapp.com",
@@ -128,6 +103,7 @@ const USER_WHITELIST = {
   "jessica@gmail.com":  { role: "sales", name: "Jessica", division: "Sales" },
   "yunita@gmail.com":   { role: "sales", name: "Yunita",  division: "Sales" },
   "anggita@gmail.com":  { role: "sales", name: "Anggita", division: "Sales" },
+  "dita@gmail.com":     { role: "sales", name: "Dita",    division: "Sales" },
   "feira@gmail.com":    { role: "pic", name: "Feira",   division: "Pre Production" },
   "helda@gmail.com":    { role: "pic", name: "Helda",   division: "Pre Production" },
   "anti@gmail.com":     { role: "pic", name: "Anti",    division: "Pre Production" },
@@ -136,74 +112,69 @@ const USER_WHITELIST = {
   "eki@gmail.com":      { role: "pic", name: "Eki",     division: "Pre Production" },
   "rivaldi@gmail.com":  { role: "pic", name: "Rivaldi", division: "Pre Production" },
   "wulan@gmail.com":    { role: "pic", name: "Wulan",   division: "Pre Production" },
-  "vanny@gmail.com":    { role: "pic", name: "Vanny", division: "Sample" },
-  "wiji@gmail.com":     { role: "pic", name: "Wiji",  division: "Sample" },
-  "yogi@gmail.com":     { role: "pic", name: "Yogi",  division: "Sample" },
-  "ase@gmail.com":      { role: "pic", name: "Ase",   division: "Sample" },
-  "reza@gmail.com":     { role: "pic", name: "Reza",  division: "Sample" },
-  "irene@gmail.com":    { role: "pic", name: "Irene",  division: "Sourcing" },
+  "vanny@gmail.com":    { role: "pic", name: "Vanny",   division: "Sample" },
+  "wiji@gmail.com":     { role: "pic", name: "Wiji",    division: "Sample" },
+  "yogi@gmail.com":     { role: "pic", name: "Yogi",    division: "Sample" },
+  "ase@gmail.com":      { role: "pic", name: "Ase",     division: "Sample" },
+  "reza@gmail.com":     { role: "pic", name: "Reza",    division: "Sample" },
+  "irene@gmail.com":    { role: "pic", name: "Irene",   division: "Sourcing" },
   "dandi@gmail.com":    { role: "pic", name: "Dandi",   division: "Technical" },
   "helmina@gmail.com":  { role: "pic", name: "Helmina", division: "Technical" },
-  "siska@gmail.com":    { role: "pic", name: "Siska", division: "Development" },
-  "dita@gmail.com":     { role: "sales", name: "Dita", division: "Sales" },
+  "siska@gmail.com":    { role: "pic", name: "Siska",   division: "Development" },
 };
 
-const app      = initializeApp(firebaseConfig);
-const auth     = getAuth(app);
-const provider = new GoogleAuthProvider();
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const provider = new firebase.auth.GoogleAuthProvider();
 
 const btnLogin = document.getElementById('btnLogin');
 const errorBox = document.getElementById('errorBox');
 const loading  = document.getElementById('loadingOverlay');
+const loadingText = document.getElementById('loadingText');
 
-// Cek hasil redirect setelah kembali dari Google
-loading.classList.add('show');
-try {
-  const result = await getRedirectResult(auth);
-  if (result) {
-    const user = result.user;
-    const userInfo = USER_WHITELIST[user.email];
-    if (!userInfo) {
-      await auth.signOut();
-      loading.classList.remove('show');
-      errorBox.textContent = `Akses ditolak. Email "${user.email}" belum terdaftar. Hubungi Admin.`;
-      errorBox.classList.add('show');
-    } else {
-      sessionStorage.setItem('user_name', userInfo.name);
-      sessionStorage.setItem('user_role', userInfo.role);
-      sessionStorage.setItem('user_division', userInfo.division);
-      sessionStorage.setItem('user_email', user.email);
-      window.location.href = './dashboard/';
-    }
-  } else {
-    loading.classList.remove('show');
-  }
-} catch (err) {
-  loading.classList.remove('show');
-  errorBox.textContent = 'Login gagal: ' + err.message;
-  errorBox.classList.add('show');
-}
-
-// Cek jika sudah login sebelumnya
-onAuthStateChanged(auth, (user) => {
+// Cek jika sudah login
+auth.onAuthStateChanged((user) => {
   if (user && USER_WHITELIST[user.email]) {
     loading.classList.add('show');
+    loadingText.textContent = 'MENGALIHKAN KE DASHBOARD...';
     window.location.href = './dashboard/';
   }
 });
 
-btnLogin.addEventListener('click', async () => {
+btnLogin.addEventListener('click', () => {
   errorBox.classList.remove('show');
+  btnLogin.disabled = true;
+  loadingText.textContent = 'MEMBUKA GOOGLE LOGIN...';
   loading.classList.add('show');
-  try {
-    await signInWithRedirect(auth, provider);
-  } catch (err) {
-    loading.classList.remove('show');
-    errorBox.textContent = 'Login gagal: ' + err.message;
-    errorBox.classList.add('show');
-  }
+
+  auth.signInWithPopup(provider)
+    .then((result) => {
+      const user = result.user;
+      const userInfo = USER_WHITELIST[user.email];
+      if (!userInfo) {
+        auth.signOut();
+        loading.classList.remove('show');
+        btnLogin.disabled = false;
+        errorBox.textContent = 'Akses ditolak. Email "' + user.email + '" belum terdaftar. Hubungi Admin.';
+        errorBox.classList.add('show');
+        return;
+      }
+      sessionStorage.setItem('user_name', userInfo.name);
+      sessionStorage.setItem('user_role', userInfo.role);
+      sessionStorage.setItem('user_division', userInfo.division);
+      sessionStorage.setItem('user_email', user.email);
+      loadingText.textContent = 'MENGALIHKAN KE DASHBOARD...';
+      window.location.href = './dashboard/';
+    })
+    .catch((err) => {
+      loading.classList.remove('show');
+      btnLogin.disabled = false;
+      if (err.code !== 'auth/popup-closed-by-user') {
+        errorBox.textContent = 'Login gagal: ' + err.message;
+        errorBox.classList.add('show');
+      }
+    });
 });
 </script>
-
 </body>
 </html>
