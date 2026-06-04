@@ -336,14 +336,15 @@
   /* ─── FAB ─── */
   .fab {
     position: fixed; bottom: 36px; right: 36px; z-index: 100;
-    display: none; align-items: center; gap: 10px;
-    padding: 14px 24px; background: var(--gold); color: var(--navy);
-    font-family: 'DM Sans', sans-serif; font-weight: 500; font-size: 13px;
-    border: none; cursor: pointer; letter-spacing: 0.05em;
+    display: none; align-items: center; justify-content: center;
+    width: 56px; height: 56px; border-radius: 50%;
+    background: var(--gold); color: var(--navy);
+    font-size: 28px; font-weight: 300; line-height: 1;
+    border: none; cursor: pointer;
     box-shadow: 0 8px 32px rgba(201,168,76,0.35);
     transition: all 0.2s;
   }
-  .fab:hover { transform: translateY(-2px); box-shadow: 0 12px 40px rgba(201,168,76,0.45); }
+  .fab:hover { transform: translateY(-2px) scale(1.08); box-shadow: 0 12px 40px rgba(201,168,76,0.5); }
   .fab.show { display: flex; }
 
   /* ─── EMPTY STATE ─── */
@@ -416,6 +417,8 @@
         <select class="select-proj" id="projectSelect" onchange="loadProject(this.value)">
           <option value="">— Pilih Project —</option>
         </select>
+        <button id="btnEditProject" onclick="openEditProjectModal()" title="Edit Project" style="display:none;padding:8px 12px;background:transparent;border:1px solid var(--border);color:var(--gold);cursor:pointer;font-size:14px;transition:all 0.2s" onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='var(--border)'">✏️</button>
+        <button id="btnDeleteProject" onclick="confirmDeleteProject()" title="Hapus Project" style="display:none;padding:8px 12px;background:transparent;border:1px solid var(--border);color:var(--red);cursor:pointer;font-size:14px;transition:all 0.2s">🗑️</button>
       </div>
     </div>
 
@@ -537,8 +540,45 @@
 
 <!-- FAB: Tambah Project (Sales + Admin only) -->
 <button class="fab" id="fabNewProject" onclick="openNewProjectModal()">
-  <span>＋</span> Project Baru
+  <span>＋</span>
 </button>
+
+<!-- MODAL: Edit Project -->
+<div class="modal-overlay" id="modalEditProject">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('modalEditProject')">✕</button>
+    <div class="modal-title">Edit <em>Project</em></div>
+    <div class="modal-sub">Ubah data project yang sudah ada</div>
+    <div class="form-group">
+      <label class="form-label">NAMA / KODE PROJECT</label>
+      <input class="form-input" type="text" id="edit-projName">
+    </div>
+    <div class="form-group">
+      <label class="form-label">BUYER / KLIEN</label>
+      <input class="form-input" type="text" id="edit-buyer">
+    </div>
+    <div class="form-group">
+      <label class="form-label">TANGGAL EMAIL APPROVED</label>
+      <input class="form-input" type="date" id="edit-emailApproved">
+    </div>
+    <div class="form-group">
+      <label class="form-label">TANGGAL MULAI PRODUKSI</label>
+      <input class="form-input" type="date" id="edit-prodDate">
+    </div>
+    <div class="form-group">
+      <label class="form-label">TANGGAL EMAIL PERMINTAAN PACKING SPEC</label>
+      <input class="form-input" type="date" id="edit-packingDate">
+    </div>
+    <div class="form-group">
+      <label class="form-label">CATATAN</label>
+      <input class="form-input" type="text" id="edit-notes">
+    </div>
+    <div class="form-actions">
+      <button class="btn-cancel" onclick="closeModal('modalEditProject')">Batal</button>
+      <button class="btn-primary" onclick="saveEditProject()">Simpan Perubahan</button>
+    </div>
+  </div>
+</div>
 
 <!-- MODAL: New Project -->
 <div class="modal-overlay" id="modalNewProject">
@@ -595,7 +635,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/fireba
 import { getAuth, onAuthStateChanged, signOut }
   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import { getFirestore, collection, doc, addDoc, setDoc, getDoc, getDocs,
-         updateDoc, query, where, orderBy, Timestamp, onSnapshot }
+         updateDoc, deleteDoc, query, where, orderBy, Timestamp, onSnapshot }
   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 // ── Config (embedded langsung) ───────────────────────────────
@@ -744,14 +784,105 @@ async function loadProjects() {
   });
 }
 window.loadProject = async (projId) => {
-  if (!projId) { document.getElementById('emptyState').style.display = ''; return; }
+  if (!projId) {
+    document.getElementById('emptyState').style.display = '';
+    document.getElementById('btnEditProject').style.display = 'none';
+    document.getElementById('btnDeleteProject').style.display = 'none';
+    return;
+  }
   document.getElementById('emptyState').style.display = 'none';
+  // Show edit/delete only for admin & sales
+  if (currentRole === 'admin' || currentRole === 'sales') {
+    document.getElementById('btnEditProject').style.display = '';
+    document.getElementById('btnDeleteProject').style.display = '';
+  }
   currentProjId = projId;
   document.getElementById('projectSelectTasks').value = projId;
   const snap = await getDocs(collection(db, 'projects', projId, 'tasks'));
   tasksCache = {};
   snap.forEach(d => tasksCache[d.id] = { id: d.id, ...d.data() });
   renderDashboard();
+};
+
+// ── Edit Project ─────────────────────────────────────────────
+window.openEditProjectModal = () => {
+  if (!currentProjId) return;
+  const proj = projectsCache[currentProjId];
+  if (!proj) return;
+  document.getElementById('edit-projName').value = proj.name || '';
+  document.getElementById('edit-buyer').value = proj.buyer || '';
+  document.getElementById('edit-emailApproved').value = proj.emailApprovedDate || '';
+  document.getElementById('edit-prodDate').value = proj.prodDate || '';
+  document.getElementById('edit-packingDate').value = proj.packingDate || '';
+  document.getElementById('edit-notes').value = proj.notes || '';
+  document.getElementById('modalEditProject').classList.add('show');
+};
+
+window.saveEditProject = async () => {
+  if (!currentProjId) return;
+  const name      = document.getElementById('edit-projName').value.trim();
+  const buyer     = document.getElementById('edit-buyer').value.trim();
+  const emailDt   = document.getElementById('edit-emailApproved').value;
+  const prodDt    = document.getElementById('edit-prodDate').value;
+  const packDt    = document.getElementById('edit-packingDate').value;
+  const notes     = document.getElementById('edit-notes').value.trim();
+  if (!name) { alert('Nama project wajib diisi.'); return; }
+
+  await updateDoc(doc(db, 'projects', currentProjId), {
+    name, buyer, emailApprovedDate: emailDt, prodDate: prodDt, packingDate: packDt, notes
+  });
+
+  // Update cache & dropdown label
+  projectsCache[currentProjId] = { ...projectsCache[currentProjId], name, buyer, emailApprovedDate: emailDt, prodDate: prodDt, packingDate: packDt, notes };
+  document.querySelectorAll('#projectSelect option, #projectSelectTasks option').forEach(opt => {
+    if (opt.value === currentProjId) opt.textContent = name;
+  });
+
+  // Recompute deadlines if dates changed
+  if (emailDt) {
+    const newDeadlines = computeDeadlines(emailDt, packDt);
+    for (const [taskId, deadline] of Object.entries(newDeadlines)) {
+      if (tasksCache[taskId] && tasksCache[taskId].status !== 'done') {
+        await updateDoc(doc(db, 'projects', currentProjId, 'tasks', taskId), { deadline });
+        tasksCache[taskId].deadline = deadline;
+      }
+    }
+  }
+
+  closeModal('modalEditProject');
+  renderDashboard();
+  alert('Project berhasil diupdate!');
+};
+
+// ── Delete Project ───────────────────────────────────────────
+window.confirmDeleteProject = async () => {
+  if (!currentProjId) return;
+  const proj = projectsCache[currentProjId];
+  const konfirmasi = confirm(`Hapus project "${proj.name}"?\n\nSemua data task dalam project ini akan ikut terhapus. Tindakan ini tidak bisa dibatalkan.`);
+  if (!konfirmasi) return;
+
+  // Delete all tasks first
+  const taskSnap = await getDocs(collection(db, 'projects', currentProjId, 'tasks'));
+  for (const t of taskSnap.docs) {
+    await deleteDoc(doc(db, 'projects', currentProjId, 'tasks', t.id));
+  }
+  await deleteDoc(doc(db, 'projects', currentProjId));
+
+  // Remove from dropdown
+  document.querySelectorAll('#projectSelect option, #projectSelectTasks option').forEach(opt => {
+    if (opt.value === currentProjId) opt.remove();
+  });
+  delete projectsCache[currentProjId];
+  currentProjId = null;
+  tasksCache = {};
+  document.getElementById('btnEditProject').style.display = 'none';
+  document.getElementById('btnDeleteProject').style.display = 'none';
+  document.getElementById('emptyState').style.display = '';
+  document.getElementById('overallProgress').style.display = 'none';
+  document.getElementById('divisionSection').style.display = 'none';
+  document.getElementById('picSection').style.display = 'none';
+  document.getElementById('projectSelect').value = '';
+  alert('Project berhasil dihapus.');
 };
 
 // ── Render Dashboard ─────────────────────────────────────────
@@ -889,7 +1020,7 @@ window.loadMyTasks = async (projId) => {
       else if (diff<=3) { st='warning'; dlClass='warning'; }
     }
     const dlStr = t.deadline ? new Date(t.deadline).toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long',year:'numeric'}) : 'Belum dihitung';
-    const canMark = currentRole === 'admin' || (t.pics||[]).includes(currentName);
+    const canMark = (t.pics||[]).includes(currentName);
     return `
       <div style="background:var(--navy-card);border:1px solid var(--border);padding:20px 24px;margin-bottom:12px;display:flex;align-items:center;gap:16px;cursor:pointer" onclick="openTaskDetail('${t.id}')">
         <div class="task-status ${st}" style="width:12px;height:12px;flex-shrink:0"></div>
@@ -935,7 +1066,7 @@ window.openTaskDetail = (taskId) => {
     else if (diff===0) statusHtml = `<span class="badge orange">⏰ Deadline HARI INI</span>`;
     else statusHtml = `<span class="badge ${diff<=3?'orange':''}">${diff} hari lagi</span>`;
   }
-  const canMark = (currentRole==='admin' || (t.pics||[]).includes(currentName)) && t.status!=='done';
+  const canMark = (t.pics||[]).includes(currentName) && t.status!=='done';
   document.getElementById('modalTaskBody').innerHTML = `
     <div style="display:grid;gap:16px;margin-bottom:24px">
       <div><div style="font-size:10px;letter-spacing:.15em;color:var(--gold);margin-bottom:6px">PIC</div><div style="font-size:14px">${(t.pics||[]).join(', ')}</div></div>
