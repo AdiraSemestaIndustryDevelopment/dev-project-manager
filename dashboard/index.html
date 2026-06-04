@@ -257,6 +257,43 @@ body::before {
 .task-dot.warning{background:var(--orange);}
 .task-dot.pending{background:rgba(255,255,255,0.15);}
 @keyframes blink{0%,100%{opacity:1;}50%{opacity:0.2;}}
+
+/* OVERDUE BLINKING EFFECTS */
+@keyframes overdueGlow {
+  0%,100% {
+    border-color: rgba(255,68,68,0.3);
+    box-shadow: 0 0 0px rgba(255,68,68,0);
+  }
+  50% {
+    border-color: rgba(255,68,68,0.9);
+    box-shadow: 0 0 18px rgba(255,68,68,0.4), 0 0 40px rgba(255,68,68,0.15);
+  }
+}
+@keyframes overdueHeaderPulse {
+  0%,100% { background: rgba(255,68,68,0.06); }
+  50%      { background: rgba(255,68,68,0.18); }
+}
+@keyframes overdueBarPulse {
+  0%,100% { opacity: 1; }
+  50%      { opacity: 0.4; }
+}
+.div-card.has-overdue {
+  animation: overdueGlow 1.6s ease-in-out infinite;
+}
+.div-card.has-overdue .div-card-head {
+  animation: overdueHeaderPulse 1.6s ease-in-out infinite;
+}
+.div-card.has-overdue .div-card-pct {
+  color: var(--red) !important;
+  animation: blink 1.6s ease-in-out infinite;
+}
+.div-card.has-overdue .div-fill {
+  background: var(--red) !important;
+  animation: overdueBarPulse 1.6s ease-in-out infinite;
+}
+.div-card.has-overdue .div-card-name {
+  color: var(--red) !important;
+}
 .task-name-cell{flex:1;color:var(--text2);line-height:1.4;font-size:11.5px;}
 .task-name-cell.done{color:var(--text3);text-decoration:line-through;}
 .task-name-cell.overdue{color:var(--red);}
@@ -1131,13 +1168,22 @@ function renderDashboard(){
     if(!divTasks.length)return;
     const divDone=divTasks.filter(t=>t.status==='done').length;
     const divPct=Math.round(divDone/divTasks.length*100);
-    const card=document.createElement('div');card.className='div-card';
+
+    // Check if any task is overdue
+    const hasOverdue=divTasks.some(t=>{
+      if(t.status==='done'||!t.deadline)return false;
+      const dl=new Date(t.deadline);dl.setHours(0,0,0,0);
+      return dl<=today;
+    });
+
+    const card=document.createElement('div');
+    card.className='div-card'+(hasOverdue?' has-overdue':'');
     card.innerHTML=`
       <div class="div-card-head">
-        <div class="div-card-name">${div}</div>
+        <div class="div-card-name">${div}${hasOverdue?' ⚠':''}</div>
         <div class="div-card-pct">${divPct}%</div>
       </div>
-      <div class="div-track"><div class="div-fill" style="width:${divPct}%"></div></div>
+      <div class="div-track"><div class="div-fill" style="width:${divPct}%;${hasOverdue?'background:var(--red)':''}"></div></div>
       <div>
         ${divTasks.map(t=>{
           let st='pending',dlC='',nC='';
@@ -1149,10 +1195,9 @@ function renderDashboard(){
             else if(diff<=3){st='warning';dlC='warning';}
           }
           const dlStr=t.deadline?new Date(t.deadline).toLocaleDateString('id-ID',{day:'numeric',month:'short'}):'–';
-          // PIC color based on status
-          const picColor = t.status==='done' ? 'var(--green)' : st==='overdue' ? 'var(--red)' : st==='warning' ? 'var(--orange)' : 'var(--text3)';
-          const picStyle = `color:${picColor};font-weight:${st==='overdue'||st==='warning'?'600':'400'};`;
-          const rowBg = st==='overdue' ? 'background:rgba(255,68,68,0.04);' : st==='warning' ? 'background:rgba(255,170,0,0.04);' : '';
+          const picColor=t.status==='done'?'var(--green)':st==='overdue'?'var(--red)':st==='warning'?'var(--orange)':'var(--text3)';
+          const picStyle=`color:${picColor};font-weight:${st==='overdue'||st==='warning'?'600':'400'};`;
+          const rowBg=st==='overdue'?'background:rgba(255,68,68,0.06);':st==='warning'?'background:rgba(255,170,0,0.04);':'';
           return `<div class="task-row" onclick="openTaskDetail('${t.id}')" style="${rowBg}">
             <div class="task-dot ${st}"></div>
             <div class="task-name-cell ${nC}">${t.name}</div>
