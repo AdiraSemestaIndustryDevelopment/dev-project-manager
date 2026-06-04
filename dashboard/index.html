@@ -261,7 +261,7 @@ body::before {
 .task-dl{font-size:10px;white-space:nowrap;color:var(--text3);}
 .task-dl.overdue{color:var(--red);}
 .task-dl.warning{color:var(--orange);}
-.task-pic{font-size:10px;color:var(--accent);white-space:nowrap;max-width:80px;overflow:hidden;text-overflow:ellipsis;}
+.task-pic{font-size:11px;white-space:nowrap;max-width:90px;overflow:hidden;text-overflow:ellipsis;font-weight:500;}
 
 /* ── PIC TABLE ── */
 .table-wrap{overflow-x:auto;border-radius:14px;border:1px solid var(--border);background:rgba(255,255,255,0.03);backdrop-filter:blur(10px);}
@@ -799,11 +799,15 @@ function renderDashboard(){
             else if(diff<=3){st='warning';dlC='warning';}
           }
           const dlStr=t.deadline?new Date(t.deadline).toLocaleDateString('id-ID',{day:'numeric',month:'short'}):'–';
-          return `<div class="task-row" onclick="openTaskDetail('${t.id}')">
+          // PIC color based on status
+          const picColor = t.status==='done' ? 'var(--green)' : st==='overdue' ? 'var(--red)' : st==='warning' ? 'var(--orange)' : 'var(--text3)';
+          const picStyle = `color:${picColor};font-weight:${st==='overdue'||st==='warning'?'600':'400'};`;
+          const rowBg = st==='overdue' ? 'background:rgba(255,68,68,0.04);' : st==='warning' ? 'background:rgba(255,170,0,0.04);' : '';
+          return `<div class="task-row" onclick="openTaskDetail('${t.id}')" style="${rowBg}">
             <div class="task-dot ${st}"></div>
             <div class="task-name-cell ${nC}">${t.name}</div>
             <div class="task-dl ${dlC}">${dlStr}</div>
-            <div class="task-pic">${(t.pics||[]).join(', ')}</div>
+            <div class="task-pic" style="${picStyle}">${(t.pics||[]).join(', ')}</div>
           </div>`;
         }).join('')}
       </div>`;
