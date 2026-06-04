@@ -1252,6 +1252,14 @@ function renderDashboard(){
   document.getElementById('overallPct').textContent=pct+'%';
   document.getElementById('overallBar').style.width=pct+'%';
 
+  // Cek H-14 dari tanggal produksi
+  const prodUrgent = proj && proj.prodDate ? (() => {
+    const pd = parseDate(proj.prodDate);
+    if(!pd) return false;
+    const daysLeft = Math.ceil((pd - today) / 86400000);
+    return daysLeft <= 14;
+  })() : false;
+
   // Division cards
   document.getElementById('divisionSection').style.display='';
   const divNames=['Sales','Pre Production','Sample','Sourcing','Technical','Development'];
@@ -1280,13 +1288,16 @@ function renderDashboard(){
     });
 
     const card=document.createElement('div');
-    card.className='div-card'+(hasOverdue?' has-overdue':'');
+    // Blinking jika: ada task overdue ATAU (H-14 produksi DAN masih ada task belum selesai di divisi ini)
+    const divHasIncomplete = divTasks.some(t=>t.status!=='done');
+    const shouldBlink = hasOverdue || (prodUrgent && divHasIncomplete);
+    card.className='div-card'+(shouldBlink?' has-overdue':'');
     card.innerHTML=`
       <div class="div-card-head">
-        <div class="div-card-name">${div}${hasOverdue?' ⚠':''}</div>
+        <div class="div-card-name">${div}${shouldBlink?' ⚠':''}</div>
         <div class="div-card-pct">${divPct}%</div>
       </div>
-      <div class="div-track"><div class="div-fill" style="width:${divPct}%;${hasOverdue?'background:var(--red)':''}"></div></div>
+      <div class="div-track"><div class="div-fill" style="width:${divPct}%;${shouldBlink?'background:var(--red)':''}"></div></div>
       <div>
         ${divTasks.map(t=>{
           let st='pending',dlC='',nC='';
