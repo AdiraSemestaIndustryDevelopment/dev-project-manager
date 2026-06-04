@@ -4,587 +4,534 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Dashboard — Dev PM</title>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --navy:       #0B1628;
-    --navy-mid:   #132040;
-    --navy-light: #1E3060;
-    --navy-card:  #0F1E38;
-    --gold:       #C9A84C;
-    --gold-light: #E8C97A;
-    --gold-dim:   rgba(201,168,76,0.12);
-    --white:      #F5F3EE;
-    --white-dim:  rgba(245,243,238,0.06);
-    --white-mid:  rgba(245,243,238,0.45);
-    --green:      #2ECC71;
-    --green-dim:  rgba(46,204,113,0.12);
-    --red:        #E74C3C;
-    --red-dim:    rgba(231,76,60,0.12);
-    --orange:     #E67E22;
-    --orange-dim: rgba(230,126,34,0.12);
-    --border:     rgba(201,168,76,0.1);
-  }
+:root {
+  --bg:        #0D0F14;
+  --bg2:       #13161E;
+  --bg3:       #1A1D27;
+  --bg4:       #21253300;
+  --card:      #161923;
+  --card2:     #1C2030;
+  --border:    rgba(255,255,255,0.07);
+  --border2:   rgba(255,255,255,0.12);
+  --accent:    #7C5CFC;
+  --accent2:   #9B7DFF;
+  --accent-dim:rgba(124,92,252,0.15);
+  --cyan:      #22D3EE;
+  --cyan-dim:  rgba(34,211,238,0.12);
+  --green:     #10B981;
+  --green-dim: rgba(16,185,129,0.15);
+  --red:       #EF4444;
+  --red-dim:   rgba(239,68,68,0.15);
+  --orange:    #F59E0B;
+  --orange-dim:rgba(245,158,11,0.15);
+  --text:      #F1F5F9;
+  --text2:     #94A3B8;
+  --text3:     #64748B;
+  --sidebar-w: 220px;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-size:13px;min-height:100vh;display:flex;overflow:hidden;}
 
-  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
-  html { scroll-behavior: smooth; }
-  body {
-    background: var(--navy);
-    color: var(--white);
-    font-family: 'DM Sans', sans-serif;
-    font-weight: 300;
-    min-height: 100vh;
-  }
+/* SCROLLBAR */
+::-webkit-scrollbar{width:4px;height:4px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:rgba(124,92,252,0.3);border-radius:4px;}
 
-  /* ─── SCROLLBAR ─── */
-  ::-webkit-scrollbar { width: 4px; }
-  ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: var(--gold-dim); border-radius: 2px; }
+/* ── SIDEBAR ── */
+.sidebar {
+  width:var(--sidebar-w);flex-shrink:0;
+  background:var(--bg2);
+  border-right:1px solid var(--border);
+  display:flex;flex-direction:column;
+  height:100vh;position:fixed;left:0;top:0;z-index:50;
+  padding:24px 0;
+}
+.sidebar-logo {
+  display:flex;align-items:center;gap:10px;
+  padding:0 20px 28px;
+  border-bottom:1px solid var(--border);
+  margin-bottom:20px;
+}
+.logo-icon-sq {
+  width:34px;height:34px;border-radius:10px;
+  background:linear-gradient(135deg,var(--accent),var(--cyan));
+  display:grid;place-items:center;font-size:16px;font-weight:700;color:#fff;
+}
+.logo-name {font-family:'Plus Jakarta Sans',sans-serif;font-size:15px;font-weight:700;color:var(--text);}
+.logo-plan {font-size:10px;color:var(--text3);margin-top:1px;}
 
-  /* ─── BACKGROUND ─── */
-  .bg-grid {
-    position: fixed; inset: 0; z-index: 0; pointer-events: none;
-    background-image:
-      linear-gradient(rgba(201,168,76,0.03) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(201,168,76,0.03) 1px, transparent 1px);
-    background-size: 60px 60px;
-  }
+.sidebar-section {padding:0 12px;margin-bottom:8px;}
+.sidebar-label {font-size:10px;letter-spacing:0.12em;color:var(--text3);text-transform:uppercase;padding:0 8px;margin-bottom:6px;}
+.nav-item {
+  display:flex;align-items:center;gap:10px;
+  padding:9px 12px;border-radius:8px;
+  font-size:13px;font-weight:500;color:var(--text2);
+  cursor:pointer;transition:all 0.18s;border:none;background:transparent;width:100%;
+}
+.nav-item:hover{background:rgba(255,255,255,0.05);color:var(--text);}
+.nav-item.active{background:var(--accent-dim);color:var(--accent2);}
+.nav-item .icon{font-size:16px;width:20px;text-align:center;}
+.nav-item .badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;padding:1px 7px;border-radius:20px;}
 
-  /* ─── TOPBAR ─── */
-  .topbar {
-    position: sticky; top: 0; z-index: 50;
-    background: rgba(11,22,40,0.92);
-    backdrop-filter: blur(20px);
-    border-bottom: 1px solid var(--border);
-    padding: 0 40px;
-    display: flex; align-items: center; justify-content: space-between;
-    height: 64px;
-  }
-  .topbar-brand {
-    display: flex; align-items: center; gap: 12px;
-  }
-  .brand-diamond {
-    width: 28px; height: 28px; border: 1.5px solid var(--gold);
-    display: grid; place-items: center; transform: rotate(45deg);
-  }
-  .brand-diamond-inner { width: 10px; height: 10px; background: var(--gold); transform: rotate(-45deg); }
-  .brand-name {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 14px; letter-spacing: 0.25em; color: var(--gold);
-  }
+.sidebar-user {
+  margin-top:auto;padding:16px 20px 0;
+  border-top:1px solid var(--border);
+  display:flex;align-items:center;gap:10px;
+}
+.user-avatar {
+  width:32px;height:32px;border-radius:50%;
+  background:linear-gradient(135deg,var(--accent),var(--cyan));
+  display:grid;place-items:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0;
+}
+.user-meta {flex:1;min-width:0;}
+.user-meta-name{font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.user-meta-role{font-size:10px;color:var(--text3);}
+.btn-logout-side{background:transparent;border:none;color:var(--text3);cursor:pointer;font-size:16px;padding:4px;transition:color 0.2s;}
+.btn-logout-side:hover{color:var(--red);}
 
-  .topbar-nav {
-    display: flex; gap: 4px;
-  }
-  .nav-btn {
-    padding: 7px 18px; font-size: 12px; letter-spacing: 0.08em;
-    background: transparent; border: 1px solid transparent; color: var(--white-mid);
-    cursor: pointer; font-family: 'DM Sans', sans-serif; font-weight: 400;
-    transition: all 0.2s;
-  }
-  .nav-btn:hover { color: var(--white); border-color: var(--border); }
-  .nav-btn.active { color: var(--gold); border-color: var(--gold-dim); background: var(--gold-dim); }
+/* ── MAIN AREA ── */
+.main-area {
+  margin-left:var(--sidebar-w);
+  flex:1;overflow-y:auto;
+  min-height:100vh;
+  background:var(--bg);
+}
 
-  .topbar-user {
-    display: flex; align-items: center; gap: 12px;
-  }
-  .user-info { text-align: right; }
-  .user-name { font-size: 13px; font-weight: 500; }
-  .user-role { font-size: 10px; letter-spacing: 0.12em; color: var(--gold); text-transform: uppercase; }
-  .btn-logout {
-    padding: 7px 14px; border: 1px solid var(--border); background: transparent;
-    color: var(--white-mid); font-size: 11px; cursor: pointer; font-family: 'DM Sans', sans-serif;
-    transition: all 0.2s; letter-spacing: 0.05em;
-  }
-  .btn-logout:hover { border-color: var(--red); color: var(--red); }
+/* ── TOPBAR ── */
+.topbar {
+  display:flex;align-items:center;justify-content:space-between;
+  padding:18px 32px;
+  border-bottom:1px solid var(--border);
+  background:rgba(13,15,20,0.8);
+  backdrop-filter:blur(20px);
+  position:sticky;top:0;z-index:40;
+}
+.topbar-left h1 {
+  font-family:'Plus Jakarta Sans',sans-serif;
+  font-size:20px;font-weight:700;
+}
+.topbar-left p {font-size:12px;color:var(--text3);margin-top:2px;}
+.topbar-right{display:flex;align-items:center;gap:12px;}
+.proj-select-wrap{display:flex;align-items:center;gap:8px;}
+.proj-select-wrap label{font-size:11px;color:var(--text3);white-space:nowrap;}
+.select-proj {
+  padding:8px 14px;background:var(--card2);border:1px solid var(--border2);
+  color:var(--text);font-family:'Inter',sans-serif;font-size:12px;
+  border-radius:8px;outline:none;cursor:pointer;min-width:200px;
+}
+.select-proj:focus{border-color:var(--accent);}
+.select-proj option{background:var(--bg3);}
+.btn-icon {
+  width:34px;height:34px;border-radius:8px;border:1px solid var(--border2);
+  background:var(--card2);color:var(--text2);cursor:pointer;
+  display:grid;place-items:center;font-size:15px;transition:all 0.2s;
+}
+.btn-icon:hover{border-color:var(--accent);color:var(--accent2);}
+.btn-icon.danger:hover{border-color:var(--red);color:var(--red);}
+.notif-dot{
+  position:fixed;bottom:32px;right:32px;z-index:100;
+  width:52px;height:52px;border-radius:50%;
+  background:linear-gradient(135deg,var(--accent),var(--cyan));
+  border:none;cursor:pointer;color:#fff;font-size:24px;
+  display:none;align-items:center;justify-content:center;
+  box-shadow:0 8px 32px rgba(124,92,252,0.4);
+  transition:all 0.2s;
+}
+.notif-dot:hover{transform:scale(1.1);}
+.notif-dot.show{display:flex;}
 
-  /* ─── MAIN LAYOUT ─── */
-  .main {
-    position: relative; z-index: 1;
-    padding: 40px 40px 80px;
-    max-width: 1600px; margin: 0 auto;
-  }
+/* ── CONTENT ── */
+.content{padding:28px 32px 80px;}
 
-  /* ─── PAGE HEADER ─── */
-  .page-header {
-    margin-bottom: 40px;
-    display: flex; align-items: flex-end; justify-content: space-between;
-    flex-wrap: wrap; gap: 20px;
-  }
-  .page-title {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 38px; font-weight: 300; line-height: 1;
-  }
-  .page-title em { font-style: italic; color: var(--gold-light); }
-  .page-subtitle { font-size: 13px; color: var(--white-mid); margin-top: 6px; }
+/* ── KPI CARDS ── */
+.kpi-grid {
+  display:grid;
+  grid-template-columns:repeat(5,1fr);
+  gap:16px;margin-bottom:28px;
+}
+.kpi-card {
+  background:var(--card);border:1px solid var(--border);
+  border-radius:14px;padding:20px;
+  position:relative;overflow:hidden;
+  transition:transform 0.2s,box-shadow 0.2s;
+}
+.kpi-card:hover{transform:translateY(-2px);box-shadow:0 8px 32px rgba(0,0,0,0.3);}
+.kpi-card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,var(--accent-dim),transparent);
+}
+.kpi-tag{font-size:10px;font-weight:600;letter-spacing:0.1em;color:var(--text3);text-transform:uppercase;margin-bottom:12px;}
+.kpi-num{font-family:'Plus Jakarta Sans',sans-serif;font-size:36px;font-weight:700;line-height:1;margin-bottom:4px;}
+.kpi-num.purple{color:var(--accent2);}
+.kpi-num.green{color:var(--green);}
+.kpi-num.red{color:var(--red);}
+.kpi-num.orange{color:var(--orange);}
+.kpi-desc{font-size:11px;color:var(--text3);}
+.kpi-emoji{position:absolute;right:16px;top:50%;transform:translateY(-50%);font-size:28px;opacity:0.12;}
 
-  .project-selector {
-    display: flex; align-items: center; gap: 10px;
-  }
-  .project-selector label { font-size: 11px; color: var(--white-mid); letter-spacing: 0.1em; }
-  .select-proj {
-    padding: 9px 16px; background: var(--white-dim); border: 1px solid var(--border);
-    color: var(--white); font-family: 'DM Sans', sans-serif; font-size: 13px;
-    cursor: pointer; min-width: 240px;
-  }
-  .select-proj option { background: var(--navy-mid); }
+/* ── PROGRESS ── */
+.progress-section{margin-bottom:28px;}
+.section-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.section-title{font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;font-weight:700;color:var(--text2);letter-spacing:0.05em;text-transform:uppercase;}
+.section-pct{font-family:'Plus Jakarta Sans',sans-serif;font-size:22px;font-weight:700;color:var(--accent2);}
+.progress-track{height:8px;background:rgba(255,255,255,0.06);border-radius:99px;overflow:hidden;}
+.progress-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--accent),var(--cyan));transition:width 0.8s ease;position:relative;}
+.progress-fill::after{content:'';position:absolute;right:0;top:0;bottom:0;width:40px;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.3));animation:shimmer 1.5s infinite;}
+@keyframes shimmer{0%,100%{opacity:0;}50%{opacity:1;}}
 
-  /* ─── KPI CARDS ─── */
-  .kpi-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 16px; margin-bottom: 40px;
-  }
-  .kpi-card {
-    background: var(--navy-card);
-    border: 1px solid var(--border);
-    padding: 24px 24px 20px;
-    position: relative; overflow: hidden;
-    animation: fadeUp 0.5s ease both;
-  }
-  .kpi-card::before {
-    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
-    background: linear-gradient(90deg, transparent, var(--gold), transparent);
-    opacity: 0.4;
-  }
-  .kpi-label {
-    font-size: 10px; letter-spacing: 0.2em; color: var(--white-mid);
-    text-transform: uppercase; margin-bottom: 12px;
-  }
-  .kpi-value {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 48px; font-weight: 300; line-height: 1; margin-bottom: 6px;
-  }
-  .kpi-value.gold { color: var(--gold-light); }
-  .kpi-value.green { color: var(--green); }
-  .kpi-value.red { color: var(--red); }
-  .kpi-value.orange { color: var(--orange); }
-  .kpi-sub { font-size: 11px; color: var(--white-mid); }
-  .kpi-icon {
-    position: absolute; right: 20px; top: 50%; transform: translateY(-50%);
-    font-size: 32px; opacity: 0.07;
-  }
+/* ── DIVISION GRID ── */
+.div-grid-wrap{display:flex;gap:16px;margin-bottom:28px;align-items:flex-start;}
+.div-col{flex:1;min-width:0;}
+.div-col-right{display:flex;flex-direction:column;gap:16px;flex:1;min-width:0;}
 
-  /* ─── SECTION TITLE ─── */
-  .section-header {
-    display: flex; align-items: center; gap: 16px; margin-bottom: 20px;
-  }
-  .section-title {
-    font-size: 11px; letter-spacing: 0.25em; text-transform: uppercase; color: var(--gold);
-  }
-  .section-line { flex: 1; height: 1px; background: var(--border); }
+.div-card{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:14px;overflow:hidden;
+  transition:box-shadow 0.2s;
+}
+.div-card:hover{box-shadow:0 4px 20px rgba(0,0,0,0.25);}
+.div-card-head{
+  padding:14px 16px;
+  display:flex;align-items:center;justify-content:space-between;
+  border-bottom:1px solid var(--border);
+}
+.div-card-name{font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text2);}
+.div-card-pct{font-family:'Plus Jakarta Sans',sans-serif;font-size:18px;font-weight:700;color:var(--accent2);}
+.div-track{height:3px;background:rgba(255,255,255,0.05);}
+.div-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--cyan));transition:width 0.6s ease;}
 
-  /* ─── PROGRESS BAR ─── */
-  .progress-bar-wrap { margin-bottom: 40px; }
-  .overall-progress {
-    height: 6px; background: rgba(255,255,255,0.05);
-    position: relative; overflow: hidden;
-  }
-  .overall-progress-fill {
-    height: 100%; background: linear-gradient(90deg, var(--gold), var(--gold-light));
-    transition: width 0.8s ease;
-    position: relative;
-  }
-  .overall-progress-fill::after {
-    content: ''; position: absolute; right: 0; top: 0; bottom: 0; width: 40px;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3));
-    animation: shimmer 1.5s infinite;
-  }
-  @keyframes shimmer { 0%,100% { opacity: 0; } 50% { opacity: 1; } }
+.task-row{
+  display:flex;align-items:center;gap:8px;
+  padding:8px 16px;font-size:12px;
+  transition:background 0.15s;cursor:pointer;
+  border-bottom:1px solid rgba(255,255,255,0.03);
+}
+.task-row:last-child{border-bottom:none;}
+.task-row:hover{background:rgba(255,255,255,0.04);}
+.task-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.task-dot.done{background:var(--green);}
+.task-dot.overdue{background:var(--red);animation:blink 1.5s infinite;}
+.task-dot.warning{background:var(--orange);}
+.task-dot.pending{background:rgba(255,255,255,0.18);}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:0.2;}}
+.task-name-cell{flex:1;color:var(--text2);line-height:1.4;font-size:11.5px;}
+.task-name-cell.done{color:var(--text3);text-decoration:line-through;}
+.task-name-cell.overdue{color:var(--red);}
+.task-dl{font-size:10px;white-space:nowrap;color:var(--text3);}
+.task-dl.overdue{color:var(--red);}
+.task-dl.warning{color:var(--orange);}
+.task-pic{font-size:10px;color:var(--accent2);white-space:nowrap;max-width:80px;overflow:hidden;text-overflow:ellipsis;}
 
-  /* ─── DIVISION GRID ─── */
-  .division-grid {
-    display: flex;
-    flex-direction: row;
-    gap: 20px; margin-bottom: 48px;
-    align-items: flex-start;
-  }
-  .division-card {
-    background: var(--navy-card); border: 1px solid var(--border);
-    padding: 0; overflow: hidden;
-    animation: fadeUp 0.5s ease both;
-    flex: 1;
-  }
-  .division-col-right {
-    display: flex; flex-direction: column; gap: 20px;
-    flex: 1; min-width: 0;
-  }
-  .division-card.div-sales        { }
-  .division-card.div-preproduction{ }
-  .division-card.div-sample       { }
-  .division-card.div-sourcing     { }
-  .division-card.div-technical    { }
-  .division-card.div-development  { }
-  .division-header {
-    padding: 16px 20px;
-    display: flex; align-items: center; justify-content: space-between;
-    border-bottom: 1px solid var(--border);
-    background: rgba(255,255,255,0.02);
-  }
-  .division-name {
-    font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase; font-weight: 500;
-  }
-  .division-pct {
-    font-family: 'Cormorant Garamond', serif; font-size: 22px; color: var(--gold-light);
-  }
-  .division-bar {
-    height: 3px; background: rgba(255,255,255,0.05);
-  }
-  .division-bar-fill {
-    height: 100%; background: var(--gold);
-    transition: width 0.6s ease;
-  }
-  .division-tasks { padding: 12px 0; }
-  .task-row {
-    display: flex; align-items: center; gap: 10px;
-    padding: 9px 20px; font-size: 12px;
-    transition: background 0.15s;
-    cursor: pointer;
-  }
-  .task-row:hover { background: var(--white-dim); }
-  .task-status {
-    width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
-  }
-  .task-status.done { background: var(--green); }
-  .task-status.overdue { background: var(--red); animation: blink 1.5s infinite; }
-  .task-status.warning { background: var(--orange); }
-  .task-status.pending { background: rgba(255,255,255,0.2); }
-  @keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
-  .task-name { flex: 1; color: var(--white-mid); line-height: 1.4; }
-  .task-name.done { color: rgba(245,243,238,0.3); text-decoration: line-through; }
-  .task-name.overdue { color: var(--red); }
-  .task-deadline { font-size: 10px; color: var(--white-mid); white-space: nowrap; }
-  .task-deadline.overdue { color: var(--red); }
-  .task-deadline.warning { color: var(--orange); }
-  .task-pics { font-size: 10px; color: var(--gold); white-space: nowrap; }
+/* ── PIC TABLE ── */
+.table-wrap{overflow-x:auto;border-radius:14px;border:1px solid var(--border);background:var(--card);}
+.pic-table{width:100%;border-collapse:collapse;min-width:600px;}
+.pic-table th{
+  font-size:10px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;
+  color:var(--text3);padding:12px 16px;text-align:left;
+  border-bottom:1px solid var(--border);background:var(--card2);
+}
+.pic-table td{padding:12px 16px;border-bottom:1px solid rgba(255,255,255,0.04);vertical-align:middle;}
+.pic-table tr:last-child td{border-bottom:none;}
+.pic-table tr:hover td{background:rgba(255,255,255,0.02);}
+.pic-name-cell{font-size:13px;font-weight:600;}
+.pic-div-cell{font-size:11px;color:var(--text3);margin-top:1px;}
+.bar-wrap{display:flex;align-items:center;gap:8px;}
+.mini-bar{flex:1;height:4px;background:rgba(255,255,255,0.07);border-radius:99px;max-width:100px;}
+.mini-fill{height:100%;border-radius:99px;transition:width 0.5s;}
+.chip{display:inline-block;padding:3px 10px;border-radius:20px;font-size:10px;font-weight:600;}
+.chip.green{background:var(--green-dim);color:var(--green);}
+.chip.orange{background:var(--orange-dim);color:var(--orange);}
+.chip.red{background:var(--red-dim);color:var(--red);}
 
-  /* ─── PIC TABLE ─── */
-  .pic-table-wrap {
-    overflow-x: auto; margin-bottom: 48px;
-  }
-  .pic-table {
-    width: 100%; border-collapse: collapse; min-width: 700px;
-  }
-  .pic-table th {
-    font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase;
-    color: var(--white-mid); font-weight: 400;
-    padding: 10px 16px; text-align: left;
-    border-bottom: 1px solid var(--border);
-  }
-  .pic-table td {
-    padding: 12px 16px; font-size: 13px;
-    border-bottom: 1px solid rgba(255,255,255,0.04);
-    vertical-align: middle;
-  }
-  .pic-table tr:hover td { background: var(--white-dim); }
-  .pic-name { font-weight: 500; }
-  .pic-division { font-size: 11px; color: var(--white-mid); }
-  .kpi-bar-wrap { display: flex; align-items: center; gap: 10px; }
-  .kpi-bar {
-    flex: 1; height: 4px; background: rgba(255,255,255,0.06);
-    max-width: 120px; min-width: 60px;
-  }
-  .kpi-bar-fill {
-    height: 100%; transition: width 0.5s ease;
-  }
-  .badge {
-    display: inline-block; padding: 3px 10px;
-    font-size: 10px; letter-spacing: 0.1em; font-weight: 500;
-  }
-  .badge.green { background: var(--green-dim); color: var(--green); }
-  .badge.orange { background: var(--orange-dim); color: var(--orange); }
-  .badge.red { background: var(--red-dim); color: var(--red); }
+/* ── MY TASKS ── */
+.my-task-card{
+  background:var(--card);border:1px solid var(--border);border-radius:12px;
+  padding:16px 20px;margin-bottom:10px;
+  display:flex;align-items:center;gap:14px;cursor:pointer;
+  transition:all 0.2s;
+}
+.my-task-card:hover{border-color:var(--accent);background:var(--card2);}
+.my-task-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+.my-task-info{flex:1;}
+.my-task-name{font-size:13px;font-weight:600;margin-bottom:3px;}
+.my-task-meta{font-size:11px;color:var(--text3);}
+.btn-done{
+  padding:7px 16px;border-radius:8px;
+  background:linear-gradient(135deg,var(--accent),var(--cyan));
+  color:#fff;font-family:'Inter',sans-serif;font-size:12px;font-weight:600;
+  border:none;cursor:pointer;transition:opacity 0.2s;white-space:nowrap;
+}
+.btn-done:hover{opacity:0.85;}
 
-  /* ─── MODAL ─── */
-  .modal-overlay {
-    position: fixed; inset: 0; z-index: 200;
-    background: rgba(11,22,40,0.85); backdrop-filter: blur(8px);
-    display: flex; align-items: center; justify-content: center;
-    opacity: 0; pointer-events: none; transition: opacity 0.25s;
-  }
-  .modal-overlay.show { opacity: 1; pointer-events: all; }
-  .modal {
-    background: var(--navy-mid); border: 1px solid var(--border);
-    width: 90%; max-width: 560px; max-height: 90vh; overflow-y: auto;
-    padding: 40px; animation: modalIn 0.25s ease;
-    position: relative;
-  }
-  @keyframes modalIn { from { transform: translateY(16px); opacity: 0; } to { transform: none; opacity: 1; } }
-  .modal-title {
-    font-family: 'Cormorant Garamond', serif; font-size: 28px; font-weight: 300;
-    margin-bottom: 6px;
-  }
-  .modal-sub { font-size: 12px; color: var(--white-mid); margin-bottom: 28px; }
-  .form-group { margin-bottom: 20px; }
-  .form-label { font-size: 11px; letter-spacing: 0.15em; color: var(--gold); margin-bottom: 8px; display: block; }
-  .form-input, .form-select {
-    width: 100%; padding: 12px 16px;
-    background: rgba(255,255,255,0.04); border: 1px solid var(--border);
-    color: var(--white); font-family: 'DM Sans', sans-serif; font-size: 13px;
-    outline: none; transition: border-color 0.2s;
-  }
-  .form-input:focus, .form-select:focus { border-color: var(--gold); }
-  .form-select option { background: var(--navy-mid); }
-  .form-actions { display: flex; gap: 12px; margin-top: 32px; }
-  .btn-primary {
-    flex: 1; padding: 13px; background: var(--gold); color: var(--navy);
-    font-family: 'DM Sans', sans-serif; font-weight: 500; font-size: 13px;
-    border: none; cursor: pointer; letter-spacing: 0.05em;
-    transition: opacity 0.2s;
-  }
-  .btn-primary:hover { opacity: 0.9; }
-  .btn-cancel {
-    padding: 13px 20px; background: transparent; border: 1px solid var(--border);
-    color: var(--white-mid); font-family: 'DM Sans', sans-serif; font-size: 13px;
-    cursor: pointer; transition: all 0.2s;
-  }
-  .btn-cancel:hover { border-color: var(--white-mid); color: var(--white); }
-  .modal-close {
-    position: absolute; top: 20px; right: 20px;
-    background: transparent; border: none; color: var(--white-mid);
-    font-size: 20px; cursor: pointer; line-height: 1;
-  }
+/* ── MODAL ── */
+.modal-overlay{
+  position:fixed;inset:0;z-index:200;
+  background:rgba(0,0,0,0.7);backdrop-filter:blur(8px);
+  display:flex;align-items:center;justify-content:center;
+  opacity:0;pointer-events:none;transition:opacity 0.25s;
+}
+.modal-overlay.show{opacity:1;pointer-events:all;}
+.modal{
+  background:var(--bg3);border:1px solid var(--border2);
+  border-radius:20px;width:90%;max-width:520px;max-height:90vh;overflow-y:auto;
+  padding:36px;animation:modalIn 0.25s ease;position:relative;
+}
+@keyframes modalIn{from{transform:translateY(16px);opacity:0;}to{transform:none;opacity:1;}}
+.modal-title{font-family:'Plus Jakarta Sans',sans-serif;font-size:24px;font-weight:700;margin-bottom:4px;}
+.modal-sub{font-size:12px;color:var(--text3);margin-bottom:24px;}
+.modal-close{position:absolute;top:20px;right:20px;background:rgba(255,255,255,0.07);border:none;color:var(--text2);font-size:14px;cursor:pointer;line-height:1;border-radius:6px;padding:6px 10px;}
+.form-group{margin-bottom:16px;}
+.form-label{font-size:11px;font-weight:600;letter-spacing:0.1em;color:var(--text3);text-transform:uppercase;margin-bottom:6px;display:block;}
+.form-input,.form-select{
+  width:100%;padding:11px 14px;
+  background:rgba(255,255,255,0.05);border:1px solid var(--border2);
+  color:var(--text);font-family:'Inter',sans-serif;font-size:13px;
+  border-radius:10px;outline:none;transition:border-color 0.2s;
+}
+.form-input:focus,.form-select:focus{border-color:var(--accent);}
+.form-select option{background:var(--bg3);}
+.form-actions{display:flex;gap:10px;margin-top:24px;}
+.btn-primary{
+  flex:1;padding:12px;border-radius:10px;
+  background:linear-gradient(135deg,var(--accent),var(--cyan));
+  color:#fff;font-family:'Inter',sans-serif;font-weight:600;font-size:13px;
+  border:none;cursor:pointer;transition:opacity 0.2s;
+}
+.btn-primary:hover{opacity:0.88;}
+.btn-cancel{
+  padding:12px 20px;border-radius:10px;background:rgba(255,255,255,0.06);
+  border:1px solid var(--border2);color:var(--text2);
+  font-family:'Inter',sans-serif;font-size:13px;cursor:pointer;transition:all 0.2s;
+}
+.btn-cancel:hover{background:rgba(255,255,255,0.1);color:var(--text);}
 
-  /* ─── FAB ─── */
-  .fab {
-    position: fixed; bottom: 36px; right: 36px; z-index: 100;
-    display: none; align-items: center; justify-content: center;
-    width: 56px; height: 56px; border-radius: 50%;
-    background: var(--gold); color: var(--navy);
-    font-size: 28px; font-weight: 300; line-height: 1;
-    border: none; cursor: pointer;
-    box-shadow: 0 8px 32px rgba(201,168,76,0.35);
-    transition: all 0.2s;
-  }
-  .fab:hover { transform: translateY(-2px) scale(1.08); box-shadow: 0 12px 40px rgba(201,168,76,0.5); }
-  .fab.show { display: flex; }
+/* EMPTY STATE */
+.empty-state{text-align:center;padding:80px 40px;color:var(--text3);}
+.empty-state .icon{font-size:48px;margin-bottom:16px;opacity:0.25;}
+.empty-state h3{font-family:'Plus Jakarta Sans',sans-serif;font-size:22px;font-weight:700;margin-bottom:8px;color:var(--text2);}
+.empty-state p{font-size:13px;}
 
-  /* ─── EMPTY STATE ─── */
-  .empty-state {
-    text-align: center; padding: 80px 40px; color: var(--white-mid);
-  }
-  .empty-state .icon { font-size: 48px; margin-bottom: 16px; opacity: 0.3; }
-  .empty-state h3 { font-family: 'Cormorant Garamond', serif; font-size: 24px; font-weight: 300; margin-bottom: 8px; }
-  .empty-state p { font-size: 13px; }
+/* NOTIF BAR */
+.notif-bar{
+  background:var(--accent-dim);border-bottom:1px solid rgba(124,92,252,0.2);
+  padding:10px 32px;display:flex;align-items:center;justify-content:space-between;
+  font-size:12px;color:var(--accent2);
+}
+.notif-bar.hidden{display:none;}
+.btn-enable-notif{
+  padding:5px 14px;border:1px solid var(--accent);background:transparent;
+  color:var(--accent2);font-size:11px;cursor:pointer;border-radius:6px;
+  font-family:'Inter',sans-serif;transition:all 0.2s;
+}
+.btn-enable-notif:hover{background:var(--accent);color:#fff;}
 
-  @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+/* SECTIONS */
+#sec-tasks,#sec-admin,#sec-dashboard{animation:fadeUp 0.4s ease both;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:none;}}
 
-  /* notification permission bar */
-  .notif-bar {
-    background: var(--gold-dim); border-bottom: 1px solid var(--border);
-    padding: 10px 40px; display: flex; align-items: center; justify-content: space-between;
-    font-size: 12px; color: var(--gold-light);
-  }
-  .notif-bar.hidden { display: none; }
-  .btn-enable-notif {
-    padding: 5px 14px; border: 1px solid var(--gold); background: transparent;
-    color: var(--gold); font-size: 11px; cursor: pointer; font-family: 'DM Sans', sans-serif;
-    transition: all 0.2s;
-  }
-  .btn-enable-notif:hover { background: var(--gold); color: var(--navy); }
+/* CHIP STATUS */
+.status-badge{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:20px;font-size:11px;font-weight:600;}
+.status-badge.green{background:var(--green-dim);color:var(--green);}
+.status-badge.red{background:var(--red-dim);color:var(--red);}
+.status-badge.orange{background:var(--orange-dim);color:var(--orange);}
+
+@media(max-width:900px){
+  .sidebar{display:none;}
+  .main-area{margin-left:0;}
+  .kpi-grid{grid-template-columns:repeat(2,1fr);}
+}
 </style>
 </head>
 <body>
 
-<div class="bg-grid"></div>
-
-<!-- Notification Permission Bar -->
-<div class="notif-bar" id="notifBar">
-  <span>🔔 Aktifkan notifikasi browser untuk mendapat pengingat task 2x sehari</span>
-  <button class="btn-enable-notif" id="btnEnableNotif">Aktifkan Sekarang</button>
-</div>
-
-<!-- TOPBAR -->
-<nav class="topbar">
-  <div class="topbar-brand">
-    <div class="brand-diamond"><div class="brand-diamond-inner"></div></div>
-    <div class="brand-name">DEV PM</div>
-  </div>
-  <div class="topbar-nav">
-    <button class="nav-btn active" onclick="showSection('dashboard')">Dashboard</button>
-    <button class="nav-btn" onclick="showSection('tasks')">My Tasks</button>
-    <button class="nav-btn" id="btnAdminNav" style="display:none" onclick="showSection('admin')">Admin</button>
-  </div>
-  <div class="topbar-user">
-    <div class="user-info">
-      <div class="user-name" id="userName">—</div>
-      <div class="user-role" id="userRole">—</div>
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon-sq">D</div>
+    <div>
+      <div class="logo-name">Dev PM</div>
+      <div class="logo-plan">Project Manager</div>
     </div>
-    <button class="btn-logout" id="btnLogout">Keluar</button>
   </div>
-</nav>
 
-<!-- MAIN -->
-<main class="main">
+  <div class="sidebar-section">
+    <div class="sidebar-label">Menu</div>
+    <button class="nav-item active" onclick="showSection('dashboard',this)">
+      <span class="icon">📊</span> Dashboard
+    </button>
+    <button class="nav-item" onclick="showSection('tasks',this)">
+      <span class="icon">✅</span> My Tasks
+    </button>
+    <button class="nav-item" id="btnAdminNav" style="display:none" onclick="showSection('admin',this)">
+      <span class="icon">⚙️</span> Admin
+    </button>
+  </div>
 
-  <!-- ══ DASHBOARD SECTION ══ -->
-  <section id="sec-dashboard">
-    <div class="page-header">
-      <div>
-        <h1 class="page-title">Project <em>Overview</em></h1>
-        <p class="page-subtitle" id="todayDate">—</p>
-      </div>
-      <div class="project-selector">
-        <label>PROJECT AKTIF</label>
+  <div class="sidebar-user">
+    <div class="user-avatar" id="userInitial">—</div>
+    <div class="user-meta">
+      <div class="user-meta-name" id="userName">—</div>
+      <div class="user-meta-role" id="userRole">—</div>
+    </div>
+    <button class="btn-logout-side" id="btnLogout" title="Keluar">⇤</button>
+  </div>
+</aside>
+
+<!-- MAIN AREA -->
+<div class="main-area">
+
+  <!-- Notif Bar -->
+  <div class="notif-bar" id="notifBar">
+    <span>🔔 Aktifkan notifikasi untuk pengingat task 2x sehari</span>
+    <button class="btn-enable-notif" id="btnEnableNotif">Aktifkan</button>
+  </div>
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="topbar-left">
+      <h1 id="pageTitle">Dashboard</h1>
+      <p id="todayDate">—</p>
+    </div>
+    <div class="topbar-right">
+      <div class="proj-select-wrap">
+        <label>PROJECT</label>
         <select class="select-proj" id="projectSelect" onchange="loadProject(this.value)">
           <option value="">— Pilih Project —</option>
         </select>
-        <button id="btnEditProject" onclick="openEditProjectModal()" title="Edit Project" style="display:none;padding:8px 12px;background:transparent;border:1px solid var(--border);color:var(--gold);cursor:pointer;font-size:14px;transition:all 0.2s" onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='var(--border)'">✏️</button>
-        <button id="btnDeleteProject" onclick="confirmDeleteProject()" title="Hapus Project" style="display:none;padding:8px 12px;background:transparent;border:1px solid var(--border);color:var(--red);cursor:pointer;font-size:14px;transition:all 0.2s">🗑️</button>
       </div>
+      <button class="btn-icon" id="btnEditProject" onclick="openEditProjectModal()" title="Edit Project" style="display:none">✏️</button>
+      <button class="btn-icon danger" id="btnDeleteProject" onclick="confirmDeleteProject()" title="Hapus Project" style="display:none">🗑️</button>
     </div>
+  </div>
 
-    <!-- KPI Cards -->
-    <div class="kpi-grid" id="kpiGrid">
-      <div class="kpi-card">
-        <div class="kpi-label">Total Task</div>
-        <div class="kpi-value gold" id="kpi-total">37</div>
-        <div class="kpi-sub">Dalam project ini</div>
-        <div class="kpi-icon">📋</div>
-      </div>
-      <div class="kpi-card">
-        <div class="kpi-label">Sudah Selesai</div>
-        <div class="kpi-value green" id="kpi-done">—</div>
-        <div class="kpi-sub" id="kpi-done-pct">—</div>
-        <div class="kpi-icon">✅</div>
-      </div>
-      <div class="kpi-card">
-        <div class="kpi-label">Overdue</div>
-        <div class="kpi-value red" id="kpi-overdue">—</div>
-        <div class="kpi-sub">Task melewati deadline</div>
-        <div class="kpi-icon">⚠️</div>
-      </div>
-      <div class="kpi-card">
-        <div class="kpi-label">Mendekati Deadline</div>
-        <div class="kpi-value orange" id="kpi-warning">—</div>
-        <div class="kpi-sub">Dalam 3 hari ke depan</div>
-        <div class="kpi-icon">⏰</div>
-      </div>
-      <div class="kpi-card">
-        <div class="kpi-label">Sisa Hari Produksi</div>
-        <div class="kpi-value gold" id="kpi-proddays">—</div>
-        <div class="kpi-sub" id="kpi-proddate">Tanggal produksi belum diset</div>
-        <div class="kpi-icon">🏭</div>
-      </div>
-    </div>
+  <!-- CONTENT -->
+  <div class="content">
 
-    <!-- Overall Progress -->
-    <div class="progress-bar-wrap" id="overallProgress" style="display:none">
-      <div class="section-header">
-        <div class="section-title">Progress Keseluruhan</div>
-        <div style="font-family:'Cormorant Garamond',serif;font-size:22px;color:var(--gold-light)" id="overallPct">0%</div>
-        <div class="section-line"></div>
+    <!-- ══ DASHBOARD ══ -->
+    <section id="sec-dashboard">
+      <!-- KPI -->
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <div class="kpi-tag">Total Task</div>
+          <div class="kpi-num purple" id="kpi-total">37</div>
+          <div class="kpi-desc">Dalam project ini</div>
+          <div class="kpi-emoji">📋</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-tag">Selesai</div>
+          <div class="kpi-num green" id="kpi-done">—</div>
+          <div class="kpi-desc" id="kpi-done-pct">—</div>
+          <div class="kpi-emoji">✅</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-tag">Overdue</div>
+          <div class="kpi-num red" id="kpi-overdue">—</div>
+          <div class="kpi-desc">Melewati deadline</div>
+          <div class="kpi-emoji">⚠️</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-tag">Mendekati Deadline</div>
+          <div class="kpi-num orange" id="kpi-warning">—</div>
+          <div class="kpi-desc">Dalam 3 hari</div>
+          <div class="kpi-emoji">⏰</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-tag">Sisa Hari Produksi</div>
+          <div class="kpi-num purple" id="kpi-proddays">—</div>
+          <div class="kpi-desc" id="kpi-proddate">Belum diset</div>
+          <div class="kpi-emoji">🏭</div>
+        </div>
       </div>
-      <div class="overall-progress">
-        <div class="overall-progress-fill" id="overallBar" style="width:0%"></div>
-      </div>
-    </div>
 
-    <!-- Division Cards -->
-    <div id="divisionSection" style="display:none">
-      <div class="section-header">
-        <div class="section-title">Progress per Divisi</div>
-        <div class="section-line"></div>
+      <!-- PROGRESS -->
+      <div class="progress-section" id="overallProgress" style="display:none">
+        <div class="section-head">
+          <div class="section-title">Progress Keseluruhan</div>
+          <div class="section-pct" id="overallPct">0%</div>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill" id="overallBar" style="width:0%"></div>
+        </div>
       </div>
-      <div class="division-grid" id="divisionGrid"></div>
-    </div>
 
-    <!-- PIC KPI Table -->
-    <div id="picSection" style="display:none">
-      <div class="section-header">
-        <div class="section-title">KPI per PIC</div>
-        <div class="section-line"></div>
+      <!-- DIVISION CARDS -->
+      <div id="divisionSection" style="display:none;margin-bottom:28px;">
+        <div class="section-head" style="margin-bottom:14px;">
+          <div class="section-title">Progress per Divisi</div>
+        </div>
+        <div class="div-grid-wrap" id="divisionGrid"></div>
       </div>
-      <div class="pic-table-wrap">
-        <table class="pic-table" id="picTable">
-          <thead>
-            <tr>
-              <th>PIC</th>
-              <th>Divisi</th>
-              <th>Selesai</th>
-              <th>KPI (%)</th>
-              <th>Overdue</th>
-              <th>Status</th>
-            </tr>
-          </thead>
-          <tbody id="picTableBody"></tbody>
-        </table>
+
+      <!-- PIC TABLE -->
+      <div id="picSection" style="display:none">
+        <div class="section-head" style="margin-bottom:14px;">
+          <div class="section-title">KPI per PIC</div>
+        </div>
+        <div class="table-wrap">
+          <table class="pic-table">
+            <thead>
+              <tr>
+                <th>PIC</th><th>Divisi</th><th>Selesai</th>
+                <th>KPI</th><th>Overdue</th><th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="picTableBody"></tbody>
+          </table>
+        </div>
       </div>
-    </div>
 
-    <!-- Empty State -->
-    <div class="empty-state" id="emptyState">
-      <div class="icon">📂</div>
-      <h3>Pilih Project untuk Melihat Dashboard</h3>
-      <p>Pilih project dari dropdown di atas, atau buat project baru dengan tombol + di bawah.</p>
-    </div>
-  </section>
-
-  <!-- ══ MY TASKS SECTION ══ -->
-  <section id="sec-tasks" style="display:none">
-    <div class="page-header">
-      <div>
-        <h1 class="page-title">My <em>Tasks</em></h1>
-        <p class="page-subtitle" id="myTasksSubtitle">Task yang ditugaskan ke Anda</p>
+      <!-- EMPTY -->
+      <div class="empty-state" id="emptyState">
+        <div class="icon">📂</div>
+        <h3>Pilih Project</h3>
+        <p>Pilih project dari dropdown di atas, atau buat project baru dengan tombol + di bawah kanan.</p>
       </div>
-      <div class="project-selector">
-        <label>PROJECT</label>
-        <select class="select-proj" id="projectSelectTasks" onchange="loadMyTasks(this.value)">
-          <option value="">— Pilih Project —</option>
-        </select>
+    </section>
+
+    <!-- ══ MY TASKS ══ -->
+    <section id="sec-tasks" style="display:none">
+      <div style="margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+        <div>
+          <div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:18px;font-weight:700;">My Tasks</div>
+          <div style="font-size:12px;color:var(--text3);margin-top:2px;">Task yang ditugaskan kepada Anda</div>
+        </div>
+        <div class="proj-select-wrap">
+          <label>PROJECT</label>
+          <select class="select-proj" id="projectSelectTasks" onchange="loadMyTasks(this.value)">
+            <option value="">— Pilih Project —</option>
+          </select>
+        </div>
       </div>
-    </div>
-    <div id="myTasksList"></div>
-  </section>
+      <div id="myTasksList"></div>
+    </section>
 
-  <!-- ══ ADMIN SECTION ══ -->
-  <section id="sec-admin" style="display:none">
-    <div class="page-header">
-      <div>
-        <h1 class="page-title">Admin <em>Panel</em></h1>
-        <p class="page-subtitle">Kelola project dan pantau semua aktivitas</p>
-      </div>
-    </div>
-    <div id="adminContent"></div>
-  </section>
+    <!-- ══ ADMIN ══ -->
+    <section id="sec-admin" style="display:none">
+      <div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:18px;font-weight:700;margin-bottom:20px;">Admin Panel</div>
+      <div id="adminContent" style="color:var(--text3);font-size:13px;">Fitur admin akan hadir segera.</div>
+    </section>
 
-</main>
+  </div>
+</div>
 
-<!-- FAB: Tambah Project (Sales + Admin only) -->
-<button class="fab" id="fabNewProject" onclick="openNewProjectModal()">
-  <span>＋</span>
-</button>
+<!-- FAB -->
+<button class="notif-dot" id="fabNewProject" onclick="openNewProjectModal()">＋</button>
 
 <!-- MODAL: Edit Project -->
 <div class="modal-overlay" id="modalEditProject">
   <div class="modal">
     <button class="modal-close" onclick="closeModal('modalEditProject')">✕</button>
-    <div class="modal-title">Edit <em>Project</em></div>
+    <div class="modal-title">Edit Project</div>
     <div class="modal-sub">Ubah data project yang sudah ada</div>
-    <div class="form-group">
-      <label class="form-label">NAMA / KODE PROJECT</label>
-      <input class="form-input" type="text" id="edit-projName">
-    </div>
-    <div class="form-group">
-      <label class="form-label">BUYER / KLIEN</label>
-      <input class="form-input" type="text" id="edit-buyer">
-    </div>
-    <div class="form-group">
-      <label class="form-label">TANGGAL EMAIL APPROVED</label>
-      <input class="form-input" type="date" id="edit-emailApproved">
-    </div>
-    <div class="form-group">
-      <label class="form-label">TANGGAL MULAI PRODUKSI</label>
-      <input class="form-input" type="date" id="edit-prodDate">
-    </div>
-    <div class="form-group">
-      <label class="form-label">TANGGAL EMAIL PERMINTAAN PACKING SPEC</label>
-      <input class="form-input" type="date" id="edit-packingDate">
-    </div>
-    <div class="form-group">
-      <label class="form-label">CATATAN</label>
-      <input class="form-input" type="text" id="edit-notes">
-    </div>
+    <div class="form-group"><label class="form-label">Nama / Kode Project</label><input class="form-input" type="text" id="edit-projName"></div>
+    <div class="form-group"><label class="form-label">Buyer / Klien</label><input class="form-input" type="text" id="edit-buyer"></div>
+    <div class="form-group"><label class="form-label">Tanggal Email Approved</label><input class="form-input" type="date" id="edit-emailApproved"></div>
+    <div class="form-group"><label class="form-label">Tanggal Mulai Produksi</label><input class="form-input" type="date" id="edit-prodDate"></div>
+    <div class="form-group"><label class="form-label">Tanggal Email Packing Spec</label><input class="form-input" type="date" id="edit-packingDate"></div>
+    <div class="form-group"><label class="form-label">Catatan</label><input class="form-input" type="text" id="edit-notes"></div>
     <div class="form-actions">
       <button class="btn-cancel" onclick="closeModal('modalEditProject')">Batal</button>
       <button class="btn-primary" onclick="saveEditProject()">Simpan Perubahan</button>
@@ -596,38 +543,14 @@
 <div class="modal-overlay" id="modalNewProject">
   <div class="modal">
     <button class="modal-close" onclick="closeModal('modalNewProject')">✕</button>
-    <div class="modal-title">Project <em>Baru</em></div>
-    <div class="modal-sub">Isi data project untuk generate 37 task secara otomatis</div>
-
-    <div class="form-group">
-      <label class="form-label">NAMA / KODE PROJECT</label>
-      <input class="form-input" type="text" id="inp-projName" placeholder="e.g. ORDER-2024-GLV-001">
-    </div>
-    <div class="form-group">
-      <label class="form-label">BUYER / KLIEN</label>
-      <input class="form-input" type="text" id="inp-buyer" placeholder="e.g. PT. XYZ International">
-    </div>
-    <div class="form-group">
-      <label class="form-label">TANGGAL EMAIL APPROVED (H+0)</label>
-      <input class="form-input" type="date" id="inp-emailApproved">
-    </div>
-    <div class="form-group">
-      <label class="form-label">TANGGAL TRANSFER DATA (H+1) — opsional, jika berbeda dari H+1</label>
-      <input class="form-input" type="date" id="inp-transferData" placeholder="Kosongkan jika = Email Approved + 1 hari">
-    </div>
-    <div class="form-group">
-      <label class="form-label">TANGGAL MULAI PRODUKSI (untuk hitung -7 hari)</label>
-      <input class="form-input" type="date" id="inp-prodDate">
-    </div>
-    <div class="form-group">
-      <label class="form-label">TANGGAL EMAIL PERMINTAAN PACKING SPEC</label>
-      <input class="form-input" type="date" id="inp-packingDate">
-    </div>
-    <div class="form-group">
-      <label class="form-label">CATATAN</label>
-      <input class="form-input" type="text" id="inp-notes" placeholder="Opsional">
-    </div>
-
+    <div class="modal-title">Project Baru</div>
+    <div class="modal-sub">Generate 37 task otomatis dari tanggal Email Approved</div>
+    <div class="form-group"><label class="form-label">Nama / Kode Project</label><input class="form-input" type="text" id="inp-projName" placeholder="e.g. ORDER-2024-GLV-001"></div>
+    <div class="form-group"><label class="form-label">Buyer / Klien</label><input class="form-input" type="text" id="inp-buyer" placeholder="e.g. PT. XYZ International"></div>
+    <div class="form-group"><label class="form-label">Tanggal Email Approved (H+0)</label><input class="form-input" type="date" id="inp-emailApproved"></div>
+    <div class="form-group"><label class="form-label">Tanggal Mulai Produksi</label><input class="form-input" type="date" id="inp-prodDate"></div>
+    <div class="form-group"><label class="form-label">Tanggal Email Permintaan Packing Spec</label><input class="form-input" type="date" id="inp-packingDate"></div>
+    <div class="form-group"><label class="form-label">Catatan</label><input class="form-input" type="text" id="inp-notes" placeholder="Opsional"></div>
     <div class="form-actions">
       <button class="btn-cancel" onclick="closeModal('modalNewProject')">Batal</button>
       <button class="btn-primary" onclick="createProject()">Generate Project + 37 Tasks</button>
@@ -635,7 +558,7 @@
   </div>
 </div>
 
-<!-- MODAL: Task Detail / Done -->
+<!-- MODAL: Task Detail -->
 <div class="modal-overlay" id="modalTaskDetail">
   <div class="modal">
     <button class="modal-close" onclick="closeModal('modalTaskDetail')">✕</button>
@@ -645,16 +568,12 @@
   </div>
 </div>
 
-<!-- Firebase + App Script -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getAuth, onAuthStateChanged, signOut }
-  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-import { getFirestore, collection, doc, addDoc, setDoc, getDoc, getDocs,
-         updateDoc, deleteDoc, query, where, orderBy, Timestamp, onSnapshot }
+import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getFirestore, collection, doc, addDoc, setDoc, getDocs, updateDoc, deleteDoc, Timestamp }
   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-// ── Config (embedded langsung) ───────────────────────────────
 const firebaseConfig = {
   apiKey: "AIzaSyDGZFjmudOI6Zy7vAYIYdSkQXJH2doMWnw",
   authDomain: "dev-project-manager-6b170.firebaseapp.com",
@@ -665,606 +584,432 @@ const firebaseConfig = {
 };
 
 const USER_WHITELIST = {
-  "juanmarconathaniel@gmail.com": { role: "admin", name: "Juan Marco", division: "admin" },
-  "jessie@gmail.com":   { role: "sales", name: "Jessie",  division: "Sales" },
-  "jessica@gmail.com":  { role: "sales", name: "Jessica", division: "Sales" },
-  "yunita@gmail.com":   { role: "sales", name: "Yunita",  division: "Sales" },
-  "anggita@gmail.com":  { role: "sales", name: "Anggita", division: "Sales" },
-  "feira@gmail.com":    { role: "pic", name: "Feira",   division: "Pre Production" },
-  "helda@gmail.com":    { role: "pic", name: "Helda",   division: "Pre Production" },
-  "anti@gmail.com":     { role: "pic", name: "Anti",    division: "Pre Production" },
-  "lanti@gmail.com":    { role: "pic", name: "Lanti",   division: "Pre Production" },
-  "tari@gmail.com":     { role: "pic", name: "Tari",    division: "Pre Production" },
-  "eki@gmail.com":      { role: "pic", name: "Eki",     division: "Pre Production" },
-  "rivaldi@gmail.com":  { role: "pic", name: "Rivaldi", division: "Pre Production" },
-  "wulan@gmail.com":    { role: "pic", name: "Wulan",   division: "Pre Production" },
-  "vanny@gmail.com":    { role: "pic", name: "Vanny", division: "Sample" },
-  "wiji@gmail.com":     { role: "pic", name: "Wiji",  division: "Sample" },
-  "yogi@gmail.com":     { role: "pic", name: "Yogi",  division: "Sample" },
-  "ase@gmail.com":      { role: "pic", name: "Ase",   division: "Sample" },
-  "reza@gmail.com":     { role: "pic", name: "Reza",  division: "Sample" },
-  "irene@gmail.com":    { role: "pic", name: "Irene",  division: "Sourcing" },
-  "dandi@gmail.com":    { role: "pic", name: "Dandi",   division: "Technical" },
-  "helmina@gmail.com":  { role: "pic", name: "Helmina", division: "Technical" },
-  "siska@gmail.com":    { role: "pic", name: "Siska", division: "Development" },
-  "dita@gmail.com":     { role: "sales", name: "Dita", division: "Sales" },
+  "juanmarconathaniel@gmail.com": { role:"admin", name:"Juan Marco", division:"admin" },
+  "jessie@gmail.com":   { role:"sales", name:"Jessie",  division:"Sales" },
+  "jessica@gmail.com":  { role:"sales", name:"Jessica", division:"Sales" },
+  "yunita@gmail.com":   { role:"sales", name:"Yunita",  division:"Sales" },
+  "anggita@gmail.com":  { role:"sales", name:"Anggita", division:"Sales" },
+  "dita@gmail.com":     { role:"sales", name:"Dita",    division:"Sales" },
+  "feira@gmail.com":    { role:"pic", name:"Feira",   division:"Pre Production" },
+  "helda@gmail.com":    { role:"pic", name:"Helda",   division:"Pre Production" },
+  "anti@gmail.com":     { role:"pic", name:"Anti",    division:"Pre Production" },
+  "lanti@gmail.com":    { role:"pic", name:"Lanti",   division:"Pre Production" },
+  "tari@gmail.com":     { role:"pic", name:"Tari",    division:"Pre Production" },
+  "eki@gmail.com":      { role:"pic", name:"Eki",     division:"Pre Production" },
+  "rivaldi@gmail.com":  { role:"pic", name:"Rivaldi", division:"Pre Production" },
+  "wulan@gmail.com":    { role:"pic", name:"Wulan",   division:"Pre Production" },
+  "vanny@gmail.com":    { role:"pic", name:"Vanny",   division:"Sample" },
+  "wiji@gmail.com":     { role:"pic", name:"Wiji",    division:"Sample" },
+  "yogi@gmail.com":     { role:"pic", name:"Yogi",    division:"Sample" },
+  "ase@gmail.com":      { role:"pic", name:"Ase",     division:"Sample" },
+  "reza@gmail.com":     { role:"pic", name:"Reza",    division:"Sample" },
+  "irene@gmail.com":    { role:"pic", name:"Irene",   division:"Sourcing" },
+  "dandi@gmail.com":    { role:"pic", name:"Dandi",   division:"Technical" },
+  "helmina@gmail.com":  { role:"pic", name:"Helmina", division:"Technical" },
+  "siska@gmail.com":    { role:"pic", name:"Siska",   division:"Development" },
 };
 
 const TASK_DEFINITIONS = [
-  { id:"T01", name:"Email Approved", division:"Sales", pics:["Jessie","Jessica","Yunita","Anggita"], deadlineRule:{ label:"H+0 dari Email Approved" } },
-  { id:"T02", name:"Transfer Data", division:"Sales", pics:["Jessie","Jessica","Yunita","Anggita"], deadlineRule:{ label:"H+1 dari Email Approved" } },
-  { id:"T03", name:"Pembuatan Draft Sample", division:"Sample", pics:["Vanny","Wiji"], deadlineRule:{ label:"H+1 dari Email Approved" } },
-  { id:"T04", name:"Persiapan Material Approval Sheet", division:"Sample", pics:["Vanny","Wiji"], deadlineRule:{ label:"H+2 dari Transfer Data" } },
-  { id:"T05", name:"Pengajuan ID Master (Glove) Sales", division:"Sales", pics:["Jessica","Yunita","Anggita"], deadlineRule:{ label:"H+2 dari Transfer Data" } },
-  { id:"T06", name:"Pengajuan ID Master (Glove) Sourcing", division:"Sourcing", pics:["Irene"], deadlineRule:{ label:"H+2 dari Transfer Data" } },
-  { id:"T07", name:"Pengajuan ID Master (Glove) Pre Production", division:"Pre Production", pics:["Feira"], deadlineRule:{ label:"H+2 dari Transfer Data" } },
-  { id:"T08", name:"Pembuatan BOM", division:"Sales", pics:["Tari","Wulan"], deadlineRule:{ label:"H+3 dari Transfer Data" } },
-  { id:"T09", name:"Pembuatan Approval Sheet Accessories", division:"Development", pics:["Siska"], deadlineRule:{ label:"H+7 dari ID Master Glove" } },
-  { id:"T10", name:"Pembuatan Approval Sheet Material", division:"Development", pics:["Siska"], deadlineRule:{ label:"H+10 dari ID Master Glove" } },
-  { id:"T11", name:"Pembuatan Approval Sheet Accessories Packing", division:"Development", pics:["Siska"], deadlineRule:{ label:"H+14 dari ID Master Glove" } },
-  { id:"T12", name:"Pembuatan Cutting Detail", division:"Pre Production", pics:["Helda","Anti"], deadlineRule:{ label:"H+1 dari Transfer Data" } },
-  { id:"T13", name:"Penyerahan Pattern Cutting Dies", division:"Pre Production", pics:["Lanti"], deadlineRule:{ label:"H+2 dari Transfer Data" } },
-  { id:"T14", name:"Pembuatan Spec System (Glove)", division:"Pre Production", pics:["Helda"], deadlineRule:{ label:"H+3 dari Pembuatan BOM" } },
-  { id:"T15", name:"Pembuatan Glove Spec", division:"Pre Production", pics:["Helda","Anti"], deadlineRule:{ label:"H+7 dari Transfer Data" } },
-  { id:"T16", name:"Pembuatan SMV", division:"Pre Production", pics:["Tari","Eki"], deadlineRule:{ label:"H+2 dari Glove Spec" } },
-  { id:"T17", name:"Pembuatan SMV Asi Software", division:"Pre Production", pics:["Tari","Eki"], deadlineRule:{ label:"H+2 dari SMV" } },
-  { id:"T18", name:"Persiapan Material Running", division:"Sample", pics:["Vanny","Wiji"], deadlineRule:{ label:"H+2 dari BOM" } },
-  { id:"T19", name:"Ketersediaan Cutting Dies", division:"Pre Production", pics:["Lanti"], deadlineRule:{ label:"H+14 dari Transfer Data" } },
-  { id:"T20", name:"Pembuatan SPO", division:"Sales", pics:["Dita"], deadlineRule:{ label:"H+1 dari Spec System Glove" } },
-  { id:"T21", name:"Pembuatan SOC", division:"Sales", pics:["Dita"], deadlineRule:{ label:"H+2 dari Spec System Glove" } },
-  { id:"T22", name:"Tanggal Supply SPO Terdekat", division:"Sales", pics:["Jessica","Anggita","Yunita"], deadlineRule:{ label:"H+1 dari SPO & SOC" } },
-  { id:"T23", name:"Running + Validasi Glove Spec", division:"Technical", pics:["Dandi","Helmina"], deadlineRule:{ label:"H+7 dari Material Running" } },
-  { id:"T24", name:"Launching / PP Meeting", division:"Sales", pics:["Jessie","Jessica","Anggita","Yunita"], deadlineRule:{ label:"H+14 dari Transfer Data" } },
-  { id:"T25", name:"Email Permintaan Packing Spec", division:"Sales", pics:["Jessica","Anggita","Yunita"], deadlineRule:{ label:"H+0 input manual" } },
-  { id:"T26", name:"Pembuatan Packing Spec", division:"Pre Production", pics:["Rivaldi"], deadlineRule:{ label:"H+3 dari Email Packing Spec" } },
-  { id:"T27", name:"Confirm + Sebar Packing Spec", division:"Sales", pics:["Jessica","Anggita","Yunita"], deadlineRule:{ label:"H+7 dari Packing Spec" } },
-  { id:"T28", name:"Pengajuan ID Master (Packing) Sales", division:"Sales", pics:["Jessica","Anggita","Yunita"], deadlineRule:{ label:"H+2 dari Confirm Packing" } },
-  { id:"T29", name:"Pengajuan ID Master (Packing) Sourcing", division:"Sourcing", pics:["Irene"], deadlineRule:{ label:"H+2 dari Confirm Packing" } },
-  { id:"T30", name:"Pengajuan ID Master (Packing) Pre Production", division:"Pre Production", pics:["Feira"], deadlineRule:{ label:"H+2 dari Confirm Packing" } },
-  { id:"T31", name:"Pembuatan Spec System (Packing)", division:"Pre Production", pics:["Helda"], deadlineRule:{ label:"H+2 dari ID Master Packing" } },
-  { id:"T32", name:"Color Window", division:"Sales", pics:["Siska"], deadlineRule:{ label:"H+2 dari Material Approval Sheet" } },
-  { id:"T33", name:"Duplikat Sample", division:"Sample", pics:["Vanny","Wiji"], deadlineRule:{ label:"H+1 dari Email Approved" } },
-  { id:"T34", name:"Measurement", division:"Sample", pics:["Vanny","Wiji"], deadlineRule:{ label:"H+1 dari Email Approved" } },
-  { id:"T35", name:"Print Window", division:"Sample", pics:["Yogi"], deadlineRule:{ label:"H+5 dari Material Approval Sheet" } },
-  { id:"T36", name:"QA File", division:"Sample", pics:["Vanny","Wiji"], deadlineRule:{ label:"H+14 dari Transfer Data" } },
-  { id:"T37", name:"Setor Pattern ke Pre Production", division:"Sample", pics:["Ase","Reza"], deadlineRule:{ label:"H+1 dari Email Approved" } },
+  {id:"T01",name:"Email Approved",division:"Sales",pics:["Jessie","Jessica","Yunita","Anggita"],deadlineLabel:"H+0 dari Email Approved"},
+  {id:"T02",name:"Transfer Data",division:"Sales",pics:["Jessie","Jessica","Yunita","Anggita"],deadlineLabel:"H+1 dari Email Approved"},
+  {id:"T03",name:"Pembuatan Draft Sample",division:"Sample",pics:["Vanny","Wiji"],deadlineLabel:"H+1 dari Email Approved"},
+  {id:"T04",name:"Persiapan Material Approval Sheet",division:"Sample",pics:["Vanny","Wiji"],deadlineLabel:"H+2 dari Transfer Data"},
+  {id:"T05",name:"Pengajuan ID Master (Glove) Sales",division:"Sales",pics:["Jessica","Yunita","Anggita"],deadlineLabel:"H+2 dari Transfer Data"},
+  {id:"T06",name:"Pengajuan ID Master (Glove) Sourcing",division:"Sourcing",pics:["Irene"],deadlineLabel:"H+2 dari Transfer Data"},
+  {id:"T07",name:"Pengajuan ID Master (Glove) Pre Production",division:"Pre Production",pics:["Feira"],deadlineLabel:"H+2 dari Transfer Data"},
+  {id:"T08",name:"Pembuatan BOM",division:"Sales",pics:["Tari","Wulan"],deadlineLabel:"H+3 dari Transfer Data"},
+  {id:"T09",name:"Pembuatan Approval Sheet Accessories",division:"Development",pics:["Siska"],deadlineLabel:"H+7 dari ID Master Glove"},
+  {id:"T10",name:"Pembuatan Approval Sheet Material",division:"Development",pics:["Siska"],deadlineLabel:"H+10 dari ID Master Glove"},
+  {id:"T11",name:"Pembuatan Approval Sheet Accessories Packing",division:"Development",pics:["Siska"],deadlineLabel:"H+14 dari ID Master Glove"},
+  {id:"T12",name:"Pembuatan Cutting Detail",division:"Pre Production",pics:["Helda","Anti"],deadlineLabel:"H+1 dari Transfer Data"},
+  {id:"T13",name:"Penyerahan Pattern Cutting Dies",division:"Pre Production",pics:["Lanti"],deadlineLabel:"H+2 dari Transfer Data"},
+  {id:"T14",name:"Pembuatan Spec System (Glove)",division:"Pre Production",pics:["Helda"],deadlineLabel:"H+3 dari BOM"},
+  {id:"T15",name:"Pembuatan Glove Spec",division:"Pre Production",pics:["Helda","Anti"],deadlineLabel:"H+7 dari Transfer Data"},
+  {id:"T16",name:"Pembuatan SMV",division:"Pre Production",pics:["Tari","Eki"],deadlineLabel:"H+2 dari Glove Spec"},
+  {id:"T17",name:"Pembuatan SMV Asi Software",division:"Pre Production",pics:["Tari","Eki"],deadlineLabel:"H+2 dari SMV"},
+  {id:"T18",name:"Persiapan Material Running",division:"Sample",pics:["Vanny","Wiji"],deadlineLabel:"H+2 dari BOM"},
+  {id:"T19",name:"Ketersediaan Cutting Dies",division:"Pre Production",pics:["Lanti"],deadlineLabel:"H+14 dari Transfer Data"},
+  {id:"T20",name:"Pembuatan SPO",division:"Sales",pics:["Dita"],deadlineLabel:"H+1 dari Spec System"},
+  {id:"T21",name:"Pembuatan SOC",division:"Sales",pics:["Dita"],deadlineLabel:"H+2 dari Spec System"},
+  {id:"T22",name:"Tanggal Supply SPO Terdekat",division:"Sales",pics:["Jessica","Anggita","Yunita"],deadlineLabel:"H+1 dari SPO & SOC"},
+  {id:"T23",name:"Running + Validasi Glove Spec",division:"Technical",pics:["Dandi","Helmina"],deadlineLabel:"H+7 dari Material Running"},
+  {id:"T24",name:"Launching / PP Meeting",division:"Sales",pics:["Jessie","Jessica","Anggita","Yunita"],deadlineLabel:"H+14 dari Transfer Data"},
+  {id:"T25",name:"Email Permintaan Packing Spec",division:"Sales",pics:["Jessica","Anggita","Yunita"],deadlineLabel:"H+0 input manual"},
+  {id:"T26",name:"Pembuatan Packing Spec",division:"Pre Production",pics:["Rivaldi"],deadlineLabel:"H+3 dari Email Packing"},
+  {id:"T27",name:"Confirm + Sebar Packing Spec",division:"Sales",pics:["Jessica","Anggita","Yunita"],deadlineLabel:"H+7 dari Packing Spec"},
+  {id:"T28",name:"Pengajuan ID Master (Packing) Sales",division:"Sales",pics:["Jessica","Anggita","Yunita"],deadlineLabel:"H+2 dari Confirm Packing"},
+  {id:"T29",name:"Pengajuan ID Master (Packing) Sourcing",division:"Sourcing",pics:["Irene"],deadlineLabel:"H+2 dari Confirm Packing"},
+  {id:"T30",name:"Pengajuan ID Master (Packing) Pre Production",division:"Pre Production",pics:["Feira"],deadlineLabel:"H+2 dari Confirm Packing"},
+  {id:"T31",name:"Pembuatan Spec System (Packing)",division:"Pre Production",pics:["Helda"],deadlineLabel:"H+2 dari ID Master Packing"},
+  {id:"T32",name:"Color Window",division:"Sales",pics:["Siska"],deadlineLabel:"H+2 dari Material Approval Sheet"},
+  {id:"T33",name:"Duplikat Sample",division:"Sample",pics:["Vanny","Wiji"],deadlineLabel:"H+1 dari Email Approved"},
+  {id:"T34",name:"Measurement",division:"Sample",pics:["Vanny","Wiji"],deadlineLabel:"H+1 dari Email Approved"},
+  {id:"T35",name:"Print Window",division:"Sample",pics:["Yogi"],deadlineLabel:"H+5 dari Material Approval Sheet"},
+  {id:"T36",name:"QA File",division:"Sample",pics:["Vanny","Wiji"],deadlineLabel:"H+14 dari Transfer Data"},
+  {id:"T37",name:"Setor Pattern ke Pre Production",division:"Sample",pics:["Ase","Reza"],deadlineLabel:"H+1 dari Email Approved"},
 ];
 
-// ── Firebase init ────────────────────────────────────────────
 const app  = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db   = getFirestore(app);
 
-// ── State ────────────────────────────────────────────────────
-let currentUser   = null;
-let currentRole   = null;
-let currentName   = null;
-let currentDiv    = null;
-let currentProjId = null;
-let projectsCache = {};
-let tasksCache    = {};
+let currentUser=null,currentRole=null,currentName=null,currentDiv=null;
+let currentProjId=null,projectsCache={},tasksCache={};
 
-// ── Auth Guard ───────────────────────────────────────────────
-onAuthStateChanged(auth, async (user) => {
-  if (!user) { window.location.href = '../'; return; }
-  const info = USER_WHITELIST[user.email];
-  if (!info) { await signOut(auth); window.location.href = '../'; return; }
-  currentUser = user;
-  currentRole = info.role;
-  currentName = info.name;
-  currentDiv  = info.division;
-
-  // UI setup
-  document.getElementById('userName').textContent = info.name;
-  document.getElementById('userRole').textContent = info.division + ' · ' + info.role;
-  document.getElementById('todayDate').textContent = new Date().toLocaleDateString('id-ID', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
-
-  if (currentRole === 'admin') document.getElementById('btnAdminNav').style.display = '';
-  if (currentRole === 'sales' || currentRole === 'admin') {
-    document.getElementById('fabNewProject').classList.add('show');
-  }
-
+// AUTH
+onAuthStateChanged(auth, async(user)=>{
+  if(!user){window.location.href='../';return;}
+  const info=USER_WHITELIST[user.email];
+  if(!info){await signOut(auth);window.location.href='../';return;}
+  currentUser=user;currentRole=info.role;currentName=info.name;currentDiv=info.division;
+  document.getElementById('userName').textContent=info.name;
+  document.getElementById('userInitial').textContent=info.name[0].toUpperCase();
+  document.getElementById('userRole').textContent=info.division;
+  document.getElementById('todayDate').textContent=new Date().toLocaleDateString('id-ID',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  if(currentRole==='admin') document.getElementById('btnAdminNav').style.display='';
+  if(currentRole==='sales'||currentRole==='admin') document.getElementById('fabNewProject').classList.add('show');
   await loadProjects();
-  checkNotifPermission();
+  checkNotif();
 });
 
-document.getElementById('btnLogout').onclick = async () => {
-  await signOut(auth);
-  window.location.href = '../';
-};
+document.getElementById('btnLogout').onclick=async()=>{await signOut(auth);window.location.href='../';};
 
-// ── Notification Permission ──────────────────────────────────
-function checkNotifPermission() {
-  if (!('Notification' in window)) { document.getElementById('notifBar').classList.add('hidden'); return; }
-  if (Notification.permission === 'granted') { document.getElementById('notifBar').classList.add('hidden'); }
+// NOTIF
+function checkNotif(){
+  if(!('Notification' in window)||Notification.permission==='granted') document.getElementById('notifBar').classList.add('hidden');
 }
-document.getElementById('btnEnableNotif').onclick = async () => {
-  const perm = await Notification.requestPermission();
-  if (perm === 'granted') {
-    document.getElementById('notifBar').classList.add('hidden');
-    scheduleNotifications();
-  }
+document.getElementById('btnEnableNotif').onclick=async()=>{
+  const p=await Notification.requestPermission();
+  if(p==='granted'){document.getElementById('notifBar').classList.add('hidden');scheduleNotif();}
 };
 
-// ── Load Projects ────────────────────────────────────────────
-async function loadProjects() {
-  const snap = await getDocs(collection(db, 'projects'));
-  const selects = [document.getElementById('projectSelect'), document.getElementById('projectSelectTasks')];
-  snap.forEach(d => {
-    projectsCache[d.id] = { id: d.id, ...d.data() };
-    selects.forEach(sel => {
-      const opt = document.createElement('option');
-      opt.value = d.id; opt.textContent = d.data().name;
-      sel.appendChild(opt);
-    });
+// LOAD PROJECTS
+async function loadProjects(){
+  const snap=await getDocs(collection(db,'projects'));
+  const sels=[document.getElementById('projectSelect'),document.getElementById('projectSelectTasks')];
+  snap.forEach(d=>{
+    projectsCache[d.id]={id:d.id,...d.data()};
+    sels.forEach(sel=>{const o=document.createElement('option');o.value=d.id;o.textContent=d.data().name;sel.appendChild(o);});
   });
 }
-window.loadProject = async (projId) => {
-  if (!projId) {
-    document.getElementById('emptyState').style.display = '';
-    document.getElementById('btnEditProject').style.display = 'none';
-    document.getElementById('btnDeleteProject').style.display = 'none';
-    return;
+
+window.loadProject=async(projId)=>{
+  const editBtn=document.getElementById('btnEditProject');
+  const delBtn=document.getElementById('btnDeleteProject');
+  if(!projId){
+    document.getElementById('emptyState').style.display='';
+    editBtn.style.display='none';delBtn.style.display='none';return;
   }
-  document.getElementById('emptyState').style.display = 'none';
-  // Show edit/delete only for admin & sales
-  if (currentRole === 'admin' || currentRole === 'sales') {
-    document.getElementById('btnEditProject').style.display = '';
-    document.getElementById('btnDeleteProject').style.display = '';
-  }
-  currentProjId = projId;
-  document.getElementById('projectSelectTasks').value = projId;
-  const snap = await getDocs(collection(db, 'projects', projId, 'tasks'));
-  tasksCache = {};
-  snap.forEach(d => tasksCache[d.id] = { id: d.id, ...d.data() });
+  document.getElementById('emptyState').style.display='none';
+  if(currentRole==='admin'||currentRole==='sales'){editBtn.style.display='';delBtn.style.display='';}
+  currentProjId=projId;
+  document.getElementById('projectSelectTasks').value=projId;
+  const snap=await getDocs(collection(db,'projects',projId,'tasks'));
+  tasksCache={};
+  snap.forEach(d=>tasksCache[d.id]={id:d.id,...d.data()});
   renderDashboard();
 };
 
-// ── Edit Project ─────────────────────────────────────────────
-window.openEditProjectModal = () => {
-  if (!currentProjId) return;
-  const proj = projectsCache[currentProjId];
-  if (!proj) return;
-  document.getElementById('edit-projName').value = proj.name || '';
-  document.getElementById('edit-buyer').value = proj.buyer || '';
-  document.getElementById('edit-emailApproved').value = proj.emailApprovedDate || '';
-  document.getElementById('edit-prodDate').value = proj.prodDate || '';
-  document.getElementById('edit-packingDate').value = proj.packingDate || '';
-  document.getElementById('edit-notes').value = proj.notes || '';
-  document.getElementById('modalEditProject').classList.add('show');
-};
-
-window.saveEditProject = async () => {
-  if (!currentProjId) return;
-  const name      = document.getElementById('edit-projName').value.trim();
-  const buyer     = document.getElementById('edit-buyer').value.trim();
-  const emailDt   = document.getElementById('edit-emailApproved').value;
-  const prodDt    = document.getElementById('edit-prodDate').value;
-  const packDt    = document.getElementById('edit-packingDate').value;
-  const notes     = document.getElementById('edit-notes').value.trim();
-  if (!name) { alert('Nama project wajib diisi.'); return; }
-
-  await updateDoc(doc(db, 'projects', currentProjId), {
-    name, buyer, emailApprovedDate: emailDt, prodDate: prodDt, packingDate: packDt, notes
+// RENDER DASHBOARD
+function renderDashboard(){
+  const proj=projectsCache[currentProjId];
+  const tasks=Object.values(tasksCache);
+  const today=new Date();today.setHours(0,0,0,0);
+  let done=0,overdue=0,warning=0;
+  tasks.forEach(t=>{
+    if(t.status==='done'){done++;return;}
+    if(!t.deadline)return;
+    const dl=new Date(t.deadline);dl.setHours(0,0,0,0);
+    const diff=Math.ceil((dl-today)/86400000);
+    if(diff<0)overdue++;else if(diff<=3)warning++;
   });
-
-  // Update cache & dropdown label
-  projectsCache[currentProjId] = { ...projectsCache[currentProjId], name, buyer, emailApprovedDate: emailDt, prodDate: prodDt, packingDate: packDt, notes };
-  document.querySelectorAll('#projectSelect option, #projectSelectTasks option').forEach(opt => {
-    if (opt.value === currentProjId) opt.textContent = name;
-  });
-
-  // Recompute deadlines if dates changed
-  if (emailDt) {
-    const newDeadlines = computeDeadlines(emailDt, packDt);
-    for (const [taskId, deadline] of Object.entries(newDeadlines)) {
-      if (tasksCache[taskId] && tasksCache[taskId].status !== 'done') {
-        await updateDoc(doc(db, 'projects', currentProjId, 'tasks', taskId), { deadline });
-        tasksCache[taskId].deadline = deadline;
-      }
-    }
+  const pct=tasks.length?Math.round(done/tasks.length*100):0;
+  document.getElementById('kpi-done').textContent=done;
+  document.getElementById('kpi-done-pct').textContent=pct+'% selesai';
+  document.getElementById('kpi-overdue').textContent=overdue;
+  document.getElementById('kpi-warning').textContent=warning;
+  if(proj&&proj.prodDate){
+    const pd=new Date(proj.prodDate);pd.setHours(0,0,0,0);
+    const diff=Math.ceil((pd-today)/86400000);
+    document.getElementById('kpi-proddays').textContent=diff>0?diff:0;
+    document.getElementById('kpi-proddate').textContent='Produksi: '+pd.toLocaleDateString('id-ID');
   }
-
-  closeModal('modalEditProject');
-  renderDashboard();
-  alert('Project berhasil diupdate!');
-};
-
-// ── Delete Project ───────────────────────────────────────────
-window.confirmDeleteProject = async () => {
-  if (!currentProjId) return;
-  const proj = projectsCache[currentProjId];
-  const konfirmasi = confirm(`Hapus project "${proj.name}"?\n\nSemua data task dalam project ini akan ikut terhapus. Tindakan ini tidak bisa dibatalkan.`);
-  if (!konfirmasi) return;
-
-  // Delete all tasks first
-  const taskSnap = await getDocs(collection(db, 'projects', currentProjId, 'tasks'));
-  for (const t of taskSnap.docs) {
-    await deleteDoc(doc(db, 'projects', currentProjId, 'tasks', t.id));
-  }
-  await deleteDoc(doc(db, 'projects', currentProjId));
-
-  // Remove from dropdown
-  document.querySelectorAll('#projectSelect option, #projectSelectTasks option').forEach(opt => {
-    if (opt.value === currentProjId) opt.remove();
-  });
-  delete projectsCache[currentProjId];
-  currentProjId = null;
-  tasksCache = {};
-  document.getElementById('btnEditProject').style.display = 'none';
-  document.getElementById('btnDeleteProject').style.display = 'none';
-  document.getElementById('emptyState').style.display = '';
-  document.getElementById('overallProgress').style.display = 'none';
-  document.getElementById('divisionSection').style.display = 'none';
-  document.getElementById('picSection').style.display = 'none';
-  document.getElementById('projectSelect').value = '';
-  alert('Project berhasil dihapus.');
-};
-
-// ── Render Dashboard ─────────────────────────────────────────
-function renderDashboard() {
-  const proj = projectsCache[currentProjId];
-  const tasks = Object.values(tasksCache);
-  const today = new Date(); today.setHours(0,0,0,0);
-
-  let done=0, overdue=0, warning=0;
-  tasks.forEach(t => {
-    if (t.status === 'done') { done++; return; }
-    if (!t.deadline) return;
-    const dl = new Date(t.deadline); dl.setHours(0,0,0,0);
-    const diff = Math.ceil((dl - today) / 86400000);
-    if (diff < 0) overdue++;
-    else if (diff <= 3) warning++;
-  });
-  const pct = tasks.length ? Math.round(done/tasks.length*100) : 0;
-
-  document.getElementById('kpi-done').textContent = done;
-  document.getElementById('kpi-done-pct').textContent = pct + '% selesai';
-  document.getElementById('kpi-overdue').textContent = overdue;
-  document.getElementById('kpi-warning').textContent = warning;
-
-  // Prod date countdown
-  if (proj && proj.prodDate) {
-    const pd = new Date(proj.prodDate); pd.setHours(0,0,0,0);
-    const diff = Math.ceil((pd - today) / 86400000);
-    document.getElementById('kpi-proddays').textContent = diff > 0 ? diff : 0;
-    document.getElementById('kpi-proddate').textContent = 'Produksi: ' + pd.toLocaleDateString('id-ID');
-  }
-
-  document.getElementById('overallProgress').style.display = '';
-  document.getElementById('overallPct').textContent = pct + '%';
-  document.getElementById('overallBar').style.width = pct + '%';
+  document.getElementById('overallProgress').style.display='';
+  document.getElementById('overallPct').textContent=pct+'%';
+  document.getElementById('overallBar').style.width=pct+'%';
 
   // Division cards
-  document.getElementById('divisionSection').style.display = '';
-  const divNames = ['Sales','Pre Production','Sample','Sourcing','Technical','Development'];
-  const divGrid = document.getElementById('divisionGrid');
-  divGrid.innerHTML = '';
+  document.getElementById('divisionSection').style.display='';
+  const divNames=['Sales','Pre Production','Sample','Sourcing','Technical','Development'];
+  const grid=document.getElementById('divisionGrid');
+  grid.innerHTML='';
+  const rightCol=document.createElement('div');rightCol.className='div-col-right';
 
-  // Buat wrapper kolom kanan untuk Technical + Development
-  const rightCol = document.createElement('div');
-  rightCol.className = 'division-col-right';
-
-  divNames.forEach(div => {
-    const divTasks = tasks.filter(t => t.division === div);
-    if (!divTasks.length) return;
-    const divDone = divTasks.filter(t => t.status==='done').length;
-    const divPct  = Math.round(divDone/divTasks.length*100);
-    const card = document.createElement('div');
-    const divClass = {
-      'Sales': 'div-sales',
-      'Pre Production': 'div-preproduction',
-      'Sample': 'div-sample',
-      'Sourcing': 'div-sourcing',
-      'Technical': 'div-technical',
-      'Development': 'div-development'
-    }[div] || '';
-    card.className = 'division-card ' + divClass;
-    card.innerHTML = `
-      <div class="division-header">
-        <div class="division-name">${div}</div>
-        <div class="division-pct">${divPct}%</div>
+  divNames.forEach(div=>{
+    const divTasks=tasks.filter(t=>t.division===div);
+    if(!divTasks.length)return;
+    const divDone=divTasks.filter(t=>t.status==='done').length;
+    const divPct=Math.round(divDone/divTasks.length*100);
+    const card=document.createElement('div');card.className='div-card';
+    card.innerHTML=`
+      <div class="div-card-head">
+        <div class="div-card-name">${div}</div>
+        <div class="div-card-pct">${divPct}%</div>
       </div>
-      <div class="division-bar"><div class="division-bar-fill" style="width:${divPct}%"></div></div>
-      <div class="division-tasks">
-        ${divTasks.map(t => {
-          let st='pending', dlClass='', nameClass='';
-          if (t.status==='done') { st='done'; nameClass='done'; }
-          else if (t.deadline) {
-            const dl=new Date(t.deadline); dl.setHours(0,0,0,0);
+      <div class="div-track"><div class="div-fill" style="width:${divPct}%"></div></div>
+      <div>
+        ${divTasks.map(t=>{
+          let st='pending',dlC='',nC='';
+          if(t.status==='done'){st='done';nC='done';}
+          else if(t.deadline){
+            const dl=new Date(t.deadline);dl.setHours(0,0,0,0);
             const diff=Math.ceil((dl-today)/86400000);
-            if (diff<0) { st='overdue'; nameClass='overdue'; dlClass='overdue'; }
-            else if (diff<=3) { st='warning'; dlClass='warning'; }
+            if(diff<0){st='overdue';nC='overdue';dlC='overdue';}
+            else if(diff<=3){st='warning';dlC='warning';}
           }
-          const dlStr = t.deadline ? new Date(t.deadline).toLocaleDateString('id-ID',{day:'numeric',month:'short'}) : '–';
+          const dlStr=t.deadline?new Date(t.deadline).toLocaleDateString('id-ID',{day:'numeric',month:'short'}):'–';
           return `<div class="task-row" onclick="openTaskDetail('${t.id}')">
-            <div class="task-status ${st}"></div>
-            <div class="task-name ${nameClass}">${t.name}</div>
-            <div class="task-deadline ${dlClass}">${dlStr}</div>
-            <div class="task-pics">${(t.pics||[]).join(', ')}</div>
+            <div class="task-dot ${st}"></div>
+            <div class="task-name-cell ${nC}">${t.name}</div>
+            <div class="task-dl ${dlC}">${dlStr}</div>
+            <div class="task-pic">${(t.pics||[]).join(', ')}</div>
           </div>`;
         }).join('')}
       </div>`;
-
-    // Technical & Development masuk ke kolom kanan
-    if (div === 'Technical' || div === 'Development') {
-      rightCol.appendChild(card);
-    } else {
-      divGrid.appendChild(card);
-    }
+    if(div==='Technical'||div==='Development'){rightCol.appendChild(card);}
+    else{const col=document.createElement('div');col.className='div-col';col.appendChild(card);grid.appendChild(col);}
   });
-
-  // Tambahkan kolom kanan ke grid
-  divGrid.appendChild(rightCol);
+  grid.appendChild(rightCol);
 
   // PIC Table
-  document.getElementById('picSection').style.display = '';
-  renderPicTable(tasks, today);
-}
-
-function renderPicTable(tasks, today) {
-  const picMap = {};
-  tasks.forEach(t => {
-    (t.pics||[]).forEach(pic => {
-      if (!picMap[pic]) picMap[pic] = { tasks:[], done:0, overdue:0, division: t.division };
+  document.getElementById('picSection').style.display='';
+  const picMap={};
+  tasks.forEach(t=>{
+    (t.pics||[]).forEach(pic=>{
+      if(!picMap[pic])picMap[pic]={tasks:[],done:0,overdue:0,division:t.division};
       picMap[pic].tasks.push(t);
-      if (t.status==='done') picMap[pic].done++;
-      else if (t.deadline) {
-        const dl=new Date(t.deadline); dl.setHours(0,0,0,0);
-        if (dl < today) picMap[pic].overdue++;
-      }
+      if(t.status==='done')picMap[pic].done++;
+      else if(t.deadline){const dl=new Date(t.deadline);dl.setHours(0,0,0,0);if(dl<today)picMap[pic].overdue++;}
     });
   });
-  const tbody = document.getElementById('picTableBody');
-  tbody.innerHTML = '';
-  Object.entries(picMap).sort((a,b)=>a[0].localeCompare(b[0])).forEach(([name, data]) => {
-    const kpi = Math.round(data.done/data.tasks.length*100);
-    const statusClass = kpi===100 ? 'green' : data.overdue > 0 ? 'red' : 'orange';
-    const statusLabel = kpi===100 ? 'Selesai' : data.overdue > 0 ? 'Ada Overdue' : 'On Track';
-    const barColor = kpi===100 ? 'var(--green)' : data.overdue > 0 ? 'var(--red)' : 'var(--orange)';
-    tbody.innerHTML += `
-      <tr>
-        <td><div class="pic-name">${name}</div></td>
-        <td><div class="pic-division">${data.division}</div></td>
-        <td>${data.done} / ${data.tasks.length}</td>
-        <td>
-          <div class="kpi-bar-wrap">
-            <div class="kpi-bar"><div class="kpi-bar-fill" style="width:${kpi}%;background:${barColor}"></div></div>
-            <span style="font-size:12px;color:${barColor}">${kpi}%</span>
-          </div>
-        </td>
-        <td style="color:${data.overdue>0?'var(--red)':'var(--white-mid)'}">${data.overdue}</td>
-        <td><span class="badge ${statusClass}">${statusLabel}</span></td>
-      </tr>`;
+  const tbody=document.getElementById('picTableBody');tbody.innerHTML='';
+  Object.entries(picMap).sort((a,b)=>a[0].localeCompare(b[0])).forEach(([name,data])=>{
+    const kpi=Math.round(data.done/data.tasks.length*100);
+    const sc=kpi===100?'green':data.overdue>0?'red':'orange';
+    const sl=kpi===100?'✓ Selesai':data.overdue>0?'Ada Overdue':'On Track';
+    const bc=kpi===100?'var(--green)':data.overdue>0?'var(--red)':'var(--orange)';
+    tbody.innerHTML+=`<tr>
+      <td><div class="pic-name-cell">${name}</div><div class="pic-div-cell">${data.division}</div></td>
+      <td style="color:var(--text3);font-size:12px">${data.division}</td>
+      <td style="font-weight:600">${data.done}<span style="color:var(--text3);font-weight:400"> / ${data.tasks.length}</span></td>
+      <td><div class="bar-wrap"><div class="mini-bar"><div class="mini-fill" style="width:${kpi}%;background:${bc}"></div></div><span style="font-size:12px;color:${bc};font-weight:600">${kpi}%</span></div></td>
+      <td style="color:${data.overdue>0?'var(--red)':'var(--text3)'};font-weight:${data.overdue>0?'600':'400'}">${data.overdue}</td>
+      <td><span class="chip ${sc}">${sl}</span></td>
+    </tr>`;
   });
 }
 
-// ── My Tasks ─────────────────────────────────────────────────
-window.loadMyTasks = async (projId) => {
-  if (!projId) return;
-  document.getElementById('projectSelect').value = projId;
+// MY TASKS
+window.loadMyTasks=async(projId)=>{
+  if(!projId)return;
+  document.getElementById('projectSelect').value=projId;
   await loadProject(projId);
-  const tasks = Object.values(tasksCache).filter(t => (t.pics||[]).includes(currentName));
-  const today = new Date(); today.setHours(0,0,0,0);
-  const container = document.getElementById('myTasksList');
-  if (!tasks.length) { container.innerHTML = '<div class="empty-state"><div class="icon">🎉</div><h3>Tidak ada task untuk Anda</h3><p>Di project ini, tidak ada task yang ditugaskan ke Anda.</p></div>'; return; }
-  container.innerHTML = tasks.map(t => {
-    let st='pending', dlClass='', nameClass='';
-    if (t.status==='done') { st='done'; nameClass='done'; }
-    else if (t.deadline) {
-      const dl=new Date(t.deadline); dl.setHours(0,0,0,0);
+  const tasks=Object.values(tasksCache).filter(t=>(t.pics||[]).includes(currentName));
+  const today=new Date();today.setHours(0,0,0,0);
+  const container=document.getElementById('myTasksList');
+  if(!tasks.length){container.innerHTML='<div class="empty-state"><div class="icon">🎉</div><h3>Tidak ada task untuk Anda</h3><p>Tidak ada task yang ditugaskan ke Anda di project ini.</p></div>';return;}
+  container.innerHTML=tasks.map(t=>{
+    let st='pending',dlC='',nC='';
+    if(t.status==='done'){st='done';nC='done';}
+    else if(t.deadline){
+      const dl=new Date(t.deadline);dl.setHours(0,0,0,0);
       const diff=Math.ceil((dl-today)/86400000);
-      if (diff<0) { st='overdue'; nameClass='overdue'; dlClass='overdue'; }
-      else if (diff<=3) { st='warning'; dlClass='warning'; }
+      if(diff<0){st='overdue';nC='overdue';dlC='overdue';}else if(diff<=3){st='warning';dlC='warning';}
     }
-    const dlStr = t.deadline ? new Date(t.deadline).toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long',year:'numeric'}) : 'Belum dihitung';
-    const canMark = (t.pics||[]).includes(currentName);
-    return `
-      <div style="background:var(--navy-card);border:1px solid var(--border);padding:20px 24px;margin-bottom:12px;display:flex;align-items:center;gap:16px;cursor:pointer" onclick="openTaskDetail('${t.id}')">
-        <div class="task-status ${st}" style="width:12px;height:12px;flex-shrink:0"></div>
-        <div style="flex:1">
-          <div style="font-size:14px;font-weight:500;margin-bottom:4px;${nameClass==='done'?'text-decoration:line-through;color:var(--white-mid)':nameClass==='overdue'?'color:var(--red)':''}">${t.name}</div>
-          <div style="font-size:11px;color:var(--white-mid)">${t.division} &nbsp;·&nbsp; <span class="${dlClass}">${dlClass==='overdue'?'⚠️ OVERDUE — ':dlClass==='warning'?'⏰ ':''} Deadline: ${dlStr}</span></div>
-        </div>
-        ${t.status!=='done' && canMark ? `<button onclick="event.stopPropagation();markDone('${t.id}')" style="padding:8px 18px;background:var(--gold);color:var(--navy);border:none;cursor:pointer;font-size:12px;font-weight:500;font-family:'DM Sans',sans-serif">✓ Selesai</button>` : t.status==='done' ? `<span class="badge green">✓ Done</span>` : ''}
-      </div>`;
+    const dlStr=t.deadline?new Date(t.deadline).toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long',year:'numeric'}):'Belum dihitung';
+    const canMark=(t.pics||[]).includes(currentName)&&t.status!=='done';
+    return `<div class="my-task-card" onclick="openTaskDetail('${t.id}')">
+      <div class="my-task-dot ${st}"></div>
+      <div class="my-task-info">
+        <div class="my-task-name" style="${nC==='done'?'text-decoration:line-through;color:var(--text3)':nC==='overdue'?'color:var(--red)':''}">${t.name}</div>
+        <div class="my-task-meta">${t.division} &nbsp;·&nbsp; <span style="color:${dlC==='overdue'?'var(--red)':dlC==='warning'?'var(--orange)':'inherit'}">${dlC==='overdue'?'⚠ OVERDUE — ':dlC==='warning'?'⏰ ':''}${dlStr}</span></div>
+      </div>
+      ${canMark?`<button class="btn-done" onclick="event.stopPropagation();markDone('${t.id}')">✓ Selesai</button>`:t.status==='done'?`<span class="chip green">✓ Done</span>`:''}
+    </div>`;
   }).join('');
 };
 
-// ── Mark Done ────────────────────────────────────────────────
-window.markDone = async (taskId) => {
-  if (!currentProjId) return;
-  const ref = doc(db, 'projects', currentProjId, 'tasks', taskId);
-  await updateDoc(ref, {
-    status: 'done',
-    actualDate: new Date().toISOString().split('T')[0],
-    doneBy: currentName,
-    doneAt: Timestamp.now()
+// MARK DONE
+window.markDone=async(taskId)=>{
+  if(!currentProjId)return;
+  await updateDoc(doc(db,'projects',currentProjId,'tasks',taskId),{
+    status:'done',actualDate:new Date().toISOString().split('T')[0],
+    doneBy:currentName,doneAt:Timestamp.now()
   });
-  tasksCache[taskId].status = 'done';
-  tasksCache[taskId].actualDate = new Date().toISOString().split('T')[0];
-  renderDashboard();
-  loadMyTasks(currentProjId);
+  tasksCache[taskId].status='done';
+  renderDashboard();loadMyTasks(currentProjId);
 };
 
-// ── Task Detail Modal ────────────────────────────────────────
-window.openTaskDetail = (taskId) => {
-  const t = tasksCache[taskId];
-  if (!t) return;
-  document.getElementById('modalTaskTitle').textContent = t.name;
-  document.getElementById('modalTaskMeta').textContent = t.division + ' — ' + (t.deadlineLabel||'');
-  const today = new Date(); today.setHours(0,0,0,0);
-  let statusHtml = '';
-  if (t.status === 'done') {
-    statusHtml = `<span class="badge green">✓ Selesai</span> <span style="font-size:12px;color:var(--white-mid)">oleh ${t.doneBy||'—'} pada ${t.actualDate||'—'}</span>`;
-  } else if (t.deadline) {
-    const dl=new Date(t.deadline); dl.setHours(0,0,0,0);
+// TASK DETAIL
+window.openTaskDetail=(taskId)=>{
+  const t=tasksCache[taskId];if(!t)return;
+  document.getElementById('modalTaskTitle').textContent=t.name;
+  document.getElementById('modalTaskMeta').textContent=t.division+' — '+(t.deadlineLabel||'');
+  const today=new Date();today.setHours(0,0,0,0);
+  let statusHtml='';
+  if(t.status==='done'){statusHtml=`<span class="chip green">✓ Selesai</span> <span style="font-size:12px;color:var(--text3)">oleh ${t.doneBy||'—'} pada ${t.actualDate||'—'}</span>`;}
+  else if(t.deadline){
+    const dl=new Date(t.deadline);dl.setHours(0,0,0,0);
     const diff=Math.ceil((dl-today)/86400000);
-    if (diff<0) statusHtml = `<span class="badge red">⚠ Overdue ${Math.abs(diff)} hari</span>`;
-    else if (diff===0) statusHtml = `<span class="badge orange">⏰ Deadline HARI INI</span>`;
-    else statusHtml = `<span class="badge ${diff<=3?'orange':''}">${diff} hari lagi</span>`;
+    if(diff<0)statusHtml=`<span class="chip red">⚠ Overdue ${Math.abs(diff)} hari</span>`;
+    else if(diff===0)statusHtml=`<span class="chip orange">⏰ Deadline HARI INI</span>`;
+    else statusHtml=`<span class="chip ${diff<=3?'orange':''}">${diff} hari lagi</span>`;
   }
-  const canMark = (t.pics||[]).includes(currentName) && t.status!=='done';
-  document.getElementById('modalTaskBody').innerHTML = `
-    <div style="display:grid;gap:16px;margin-bottom:24px">
-      <div><div style="font-size:10px;letter-spacing:.15em;color:var(--gold);margin-bottom:6px">PIC</div><div style="font-size:14px">${(t.pics||[]).join(', ')}</div></div>
-      <div><div style="font-size:10px;letter-spacing:.15em;color:var(--gold);margin-bottom:6px">DEADLINE</div><div style="font-size:14px">${t.deadline ? new Date(t.deadline).toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long',year:'numeric'}) : '—'}</div></div>
-      <div><div style="font-size:10px;letter-spacing:.15em;color:var(--gold);margin-bottom:6px">STATUS</div>${statusHtml}</div>
+  const canMark=(t.pics||[]).includes(currentName)&&t.status!=='done';
+  document.getElementById('modalTaskBody').innerHTML=`
+    <div style="display:grid;gap:14px;margin-bottom:20px">
+      <div><div style="font-size:10px;font-weight:700;letter-spacing:.1em;color:var(--text3);margin-bottom:5px;text-transform:uppercase">PIC</div><div style="font-size:13px;font-weight:600">${(t.pics||[]).join(', ')}</div></div>
+      <div><div style="font-size:10px;font-weight:700;letter-spacing:.1em;color:var(--text3);margin-bottom:5px;text-transform:uppercase">Deadline</div><div style="font-size:13px">${t.deadline?new Date(t.deadline).toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long',year:'numeric'}):'—'}</div></div>
+      <div><div style="font-size:10px;font-weight:700;letter-spacing:.1em;color:var(--text3);margin-bottom:5px;text-transform:uppercase">Status</div>${statusHtml}</div>
     </div>
-    ${canMark ? `<button class="btn-primary" onclick="markDone('${t.id}');closeModal('modalTaskDetail')">✓ Tandai Selesai</button>` : ''}
-  `;
+    ${canMark?`<button class="btn-primary" onclick="markDone('${t.id}');closeModal('modalTaskDetail')">✓ Tandai Selesai</button>`:''}`;
   document.getElementById('modalTaskDetail').classList.add('show');
 };
 
-// ── Create Project ───────────────────────────────────────────
-window.createProject = async () => {
-  const name       = document.getElementById('inp-projName').value.trim();
-  const buyer      = document.getElementById('inp-buyer').value.trim();
-  const emailDt    = document.getElementById('inp-emailApproved').value;
-  const transferDt = document.getElementById('inp-transferData').value;
-  const prodDt     = document.getElementById('inp-prodDate').value;
-  const packDt     = document.getElementById('inp-packingDate').value;
-  const notes      = document.getElementById('inp-notes').value.trim();
-
-  if (!name || !emailDt) { alert('Nama project dan tanggal Email Approved wajib diisi.'); return; }
-
-  // Jika transfer data tidak diisi, otomatis H+1 dari email approved
-  const transferDate = transferDt || (() => {
-    const d = new Date(emailDt); d.setDate(d.getDate()+1);
-    return d.toISOString().split('T')[0];
-  })();
-
-  // Create project doc
-  const projRef = await addDoc(collection(db, 'projects'), {
-    name, buyer, emailApprovedDate: emailDt, transferDate, prodDate: prodDt,
-    packingDate: packDt, notes, createdBy: currentName,
-    createdAt: Timestamp.now(), status: 'active'
-  });
-
-  // Compute all 37 task deadlines
-  const deadlines = computeDeadlines(emailDt, transferDate, packDt);
-
-  // Batch create 37 tasks
-  for (const td of TASK_DEFINITIONS) {
-    await setDoc(doc(db, 'projects', projRef.id, 'tasks', td.id), {
-      id: td.id, name: td.name, division: td.division, pics: td.pics,
-      deadlineLabel: td.deadlineRule.label,
-      deadline: deadlines[td.id] || null,
-      status: 'pending', actualDate: null, doneBy: null,
+// CREATE PROJECT
+window.createProject=async()=>{
+  const name=document.getElementById('inp-projName').value.trim();
+  const buyer=document.getElementById('inp-buyer').value.trim();
+  const emailDt=document.getElementById('inp-emailApproved').value;
+  const prodDt=document.getElementById('inp-prodDate').value;
+  const packDt=document.getElementById('inp-packingDate').value;
+  const notes=document.getElementById('inp-notes').value.trim();
+  if(!name||!emailDt){alert('Nama project dan tanggal Email Approved wajib diisi.');return;}
+  const projRef=await addDoc(collection(db,'projects'),{name,buyer,emailApprovedDate:emailDt,prodDate:prodDt,packingDate:packDt,notes,createdBy:currentName,createdAt:Timestamp.now(),status:'active'});
+  const dl=computeDeadlines(emailDt,packDt);
+  for(const td of TASK_DEFINITIONS){
+    await setDoc(doc(db,'projects',projRef.id,'tasks',td.id),{
+      id:td.id,name:td.name,division:td.division,pics:td.pics,
+      deadlineLabel:td.deadlineLabel,deadline:dl[td.id]||null,
+      status:'pending',actualDate:null,doneBy:null
     });
   }
-
   closeModal('modalNewProject');
-  const opt = document.createElement('option');
-  opt.value = projRef.id; opt.textContent = name;
-  document.getElementById('projectSelect').appendChild(opt.cloneNode(true));
-  document.getElementById('projectSelectTasks').appendChild(opt);
-  projectsCache[projRef.id] = { id: projRef.id, name, prodDate: prodDt };
-  document.getElementById('projectSelect').value = projRef.id;
+  projectsCache[projRef.id]={id:projRef.id,name,prodDate:prodDt};
+  ['projectSelect','projectSelectTasks'].forEach(id=>{
+    const o=document.createElement('option');o.value=projRef.id;o.textContent=name;
+    document.getElementById(id).appendChild(o);
+  });
+  document.getElementById('projectSelect').value=projRef.id;
   loadProject(projRef.id);
 };
 
-// ── Deadline Computation ─────────────────────────────────────
-function computeDeadlines(emailDt, transferDt, packDt) {
-  const add = (dt, days) => {
-    if (!dt) return null;
-    const d = new Date(dt); d.setDate(d.getDate()+days);
-    return d.toISOString().split('T')[0];
-  };
-  const dl = {};
-  dl['T01'] = emailDt;
-  dl['T02'] = transferDt || add(emailDt,1);  // Transfer Data — pakai tanggal yg diinput, atau H+1
-  dl['T03'] = add(emailDt,1);
-  dl['T04'] = add(dl['T02'],2);
-  dl['T05'] = add(dl['T02'],2);
-  dl['T06'] = add(dl['T02'],2);
-  dl['T07'] = add(dl['T02'],2);
-  dl['T08'] = add(dl['T02'],3);
-  const idMasterBase = dl['T07'];
-  dl['T09'] = add(idMasterBase,7);
-  dl['T10'] = add(idMasterBase,10);
-  dl['T11'] = add(idMasterBase,14);
-  dl['T12'] = add(dl['T02'],1);
-  dl['T13'] = add(dl['T02'],2);
-  dl['T14'] = add(dl['T08'],3);
-  dl['T15'] = add(dl['T02'],7);
-  dl['T16'] = add(dl['T15'],2);
-  dl['T17'] = add(dl['T16'],2);
-  dl['T18'] = add(dl['T08'],2);
-  dl['T19'] = add(dl['T02'],14);
-  dl['T20'] = add(dl['T14'],1);
-  dl['T21'] = add(dl['T14'],2);
-  const spoSocBase = dl['T21'];
-  dl['T22'] = add(spoSocBase,1);
-  dl['T23'] = add(dl['T18'],7);
-  dl['T24'] = add(dl['T02'],14);
-  dl['T25'] = packDt || null;
-  dl['T26'] = add(dl['T25'],3);
-  dl['T27'] = add(dl['T26'],7);
-  dl['T28'] = add(dl['T27'],2);
-  dl['T29'] = add(dl['T27'],2);
-  dl['T30'] = add(dl['T27'],2);
-  dl['T31'] = add(dl['T28'],2);
-  dl['T32'] = add(dl['T04'],2);
-  dl['T33'] = add(emailDt,1);
-  dl['T34'] = add(emailDt,1);
-  dl['T35'] = add(dl['T04'],5);
-  dl['T36'] = add(dl['T02'],14);
-  dl['T37'] = add(emailDt,1);
+// EDIT PROJECT
+window.openEditProjectModal=()=>{
+  if(!currentProjId)return;
+  const p=projectsCache[currentProjId];if(!p)return;
+  document.getElementById('edit-projName').value=p.name||'';
+  document.getElementById('edit-buyer').value=p.buyer||'';
+  document.getElementById('edit-emailApproved').value=p.emailApprovedDate||'';
+  document.getElementById('edit-prodDate').value=p.prodDate||'';
+  document.getElementById('edit-packingDate').value=p.packingDate||'';
+  document.getElementById('edit-notes').value=p.notes||'';
+  document.getElementById('modalEditProject').classList.add('show');
+};
+window.saveEditProject=async()=>{
+  if(!currentProjId)return;
+  const name=document.getElementById('edit-projName').value.trim();
+  const buyer=document.getElementById('edit-buyer').value.trim();
+  const emailDt=document.getElementById('edit-emailApproved').value;
+  const prodDt=document.getElementById('edit-prodDate').value;
+  const packDt=document.getElementById('edit-packingDate').value;
+  const notes=document.getElementById('edit-notes').value.trim();
+  if(!name){alert('Nama project wajib diisi.');return;}
+  await updateDoc(doc(db,'projects',currentProjId),{name,buyer,emailApprovedDate:emailDt,prodDate:prodDt,packingDate:packDt,notes});
+  projectsCache[currentProjId]={...projectsCache[currentProjId],name,buyer,emailApprovedDate:emailDt,prodDate:prodDt,packingDate:packDt,notes};
+  document.querySelectorAll('#projectSelect option,#projectSelectTasks option').forEach(o=>{if(o.value===currentProjId)o.textContent=name;});
+  if(emailDt){
+    const newDl=computeDeadlines(emailDt,packDt);
+    for(const[tid,deadline] of Object.entries(newDl)){
+      if(tasksCache[tid]&&tasksCache[tid].status!=='done'){
+        await updateDoc(doc(db,'projects',currentProjId,'tasks',tid),{deadline});
+        tasksCache[tid].deadline=deadline;
+      }
+    }
+  }
+  closeModal('modalEditProject');renderDashboard();alert('Project berhasil diupdate!');
+};
+
+// DELETE PROJECT
+window.confirmDeleteProject=async()=>{
+  if(!currentProjId)return;
+  const proj=projectsCache[currentProjId];
+  if(!confirm(`Hapus project "${proj.name}"?\n\nSemua task akan ikut terhapus. Tindakan ini tidak bisa dibatalkan.`))return;
+  const snap=await getDocs(collection(db,'projects',currentProjId,'tasks'));
+  for(const t of snap.docs)await deleteDoc(doc(db,'projects',currentProjId,'tasks',t.id));
+  await deleteDoc(doc(db,'projects',currentProjId));
+  document.querySelectorAll('#projectSelect option,#projectSelectTasks option').forEach(o=>{if(o.value===currentProjId)o.remove();});
+  delete projectsCache[currentProjId];currentProjId=null;tasksCache={};
+  document.getElementById('btnEditProject').style.display='none';
+  document.getElementById('btnDeleteProject').style.display='none';
+  document.getElementById('emptyState').style.display='';
+  document.getElementById('overallProgress').style.display='none';
+  document.getElementById('divisionSection').style.display='none';
+  document.getElementById('picSection').style.display='none';
+  document.getElementById('projectSelect').value='';
+  alert('Project berhasil dihapus.');
+};
+
+// DEADLINES
+function computeDeadlines(emailDt,packDt){
+  const add=(dt,days)=>{if(!dt)return null;const d=new Date(dt);d.setDate(d.getDate()+days);return d.toISOString().split('T')[0];};
+  const dl={};
+  dl['T01']=emailDt;dl['T02']=add(emailDt,1);dl['T03']=add(emailDt,1);
+  dl['T04']=add(dl['T02'],2);dl['T05']=add(dl['T02'],2);dl['T06']=add(dl['T02'],2);
+  dl['T07']=add(dl['T02'],2);dl['T08']=add(dl['T02'],3);
+  dl['T09']=add(dl['T07'],7);dl['T10']=add(dl['T07'],10);dl['T11']=add(dl['T07'],14);
+  dl['T12']=add(dl['T02'],1);dl['T13']=add(dl['T02'],2);dl['T14']=add(dl['T08'],3);
+  dl['T15']=add(dl['T02'],7);dl['T16']=add(dl['T15'],2);dl['T17']=add(dl['T16'],2);
+  dl['T18']=add(dl['T08'],2);dl['T19']=add(dl['T02'],14);
+  dl['T20']=add(dl['T14'],1);dl['T21']=add(dl['T14'],2);dl['T22']=add(dl['T21'],1);
+  dl['T23']=add(dl['T18'],7);dl['T24']=add(dl['T02'],14);
+  dl['T25']=packDt||null;dl['T26']=add(dl['T25'],3);dl['T27']=add(dl['T26'],7);
+  dl['T28']=add(dl['T27'],2);dl['T29']=add(dl['T27'],2);dl['T30']=add(dl['T27'],2);
+  dl['T31']=add(dl['T28'],2);dl['T32']=add(dl['T04'],2);
+  dl['T33']=add(emailDt,1);dl['T34']=add(emailDt,1);dl['T35']=add(dl['T04'],5);
+  dl['T36']=add(dl['T02'],14);dl['T37']=add(emailDt,1);
   return dl;
 }
 
-// ── Notification Scheduler ───────────────────────────────────
-function scheduleNotifications() {
-  if (!('Notification' in window) || Notification.permission !== 'granted') return;
-  // Check twice daily: 8 AM and 2 PM
-  const checkAndNotify = () => {
-    if (!currentProjId) return;
-    const tasks = Object.values(tasksCache);
-    const today = new Date(); today.setHours(0,0,0,0);
-    const myTasks = tasks.filter(t =>
-      t.status !== 'done' && (t.pics||[]).includes(currentName)
-    );
-    const overdue = myTasks.filter(t => t.deadline && new Date(t.deadline) < today);
-    const warning = myTasks.filter(t => {
-      if (!t.deadline) return false;
-      const dl=new Date(t.deadline); dl.setHours(0,0,0,0);
-      const diff=Math.ceil((dl-today)/86400000);
-      return diff>=0 && diff<=3;
-    });
-    if (overdue.length || warning.length) {
-      new Notification('Dev PM — Pengingat Task', {
-        body: `${overdue.length} task overdue, ${warning.length} task mendekati deadline. Segera selesaikan!`,
-        icon: '../icon-192.png'
-      });
-    }
+// NOTIF SCHEDULE
+function scheduleNotif(){
+  if(!('Notification'in window)||Notification.permission!=='granted')return;
+  const check=()=>{
+    if(!currentProjId)return;
+    const today=new Date();today.setHours(0,0,0,0);
+    const my=Object.values(tasksCache).filter(t=>t.status!=='done'&&(t.pics||[]).includes(currentName));
+    const ov=my.filter(t=>t.deadline&&new Date(t.deadline)<today);
+    const wa=my.filter(t=>{if(!t.deadline)return false;const dl=new Date(t.deadline);dl.setHours(0,0,0,0);const d=Math.ceil((dl-today)/86400000);return d>=0&&d<=3;});
+    if(ov.length||wa.length)new Notification('Dev PM — Pengingat Task',{body:`${ov.length} task overdue, ${wa.length} task mendekati deadline.`});
   };
-  // Schedule for 08:00 and 14:00
-  const scheduleAt = (hour) => {
-    const now = new Date();
-    const target = new Date(); target.setHours(hour,0,0,0);
-    if (target <= now) target.setDate(target.getDate()+1);
-    setTimeout(() => { checkAndNotify(); setInterval(checkAndNotify, 24*60*60*1000); }, target-now);
-  };
-  scheduleAt(8); scheduleAt(14);
+  [8,14].forEach(h=>{
+    const now=new Date(),t=new Date();t.setHours(h,0,0,0);
+    if(t<=now)t.setDate(t.getDate()+1);
+    setTimeout(()=>{check();setInterval(check,86400000);},t-now);
+  });
 }
 
-// ── Section Navigation ───────────────────────────────────────
-window.showSection = (section) => {
-  ['dashboard','tasks','admin'].forEach(s => {
-    document.getElementById('sec-'+s).style.display = s===section ? '' : 'none';
-  });
-  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-  event.target.classList.add('active');
+// NAVIGATION
+window.showSection=(section,btn)=>{
+  ['dashboard','tasks','admin'].forEach(s=>{document.getElementById('sec-'+s).style.display=s===section?'':'none';});
+  document.querySelectorAll('.nav-item').forEach(b=>b.classList.remove('active'));
+  if(btn)btn.classList.add('active');
+  document.getElementById('pageTitle').textContent=section==='dashboard'?'Dashboard':section==='tasks'?'My Tasks':'Admin Panel';
 };
 
-// ── Modal Helpers ─────────────────────────────────────────────
-window.openNewProjectModal = () => document.getElementById('modalNewProject').classList.add('show');
-window.closeModal = (id) => document.getElementById(id).classList.remove('show');
-document.querySelectorAll('.modal-overlay').forEach(el => {
-  el.addEventListener('click', e => { if (e.target===el) el.classList.remove('show'); });
-});
+window.openNewProjectModal=()=>document.getElementById('modalNewProject').classList.add('show');
+window.closeModal=(id)=>document.getElementById(id).classList.remove('show');
+document.querySelectorAll('.modal-overlay').forEach(el=>el.addEventListener('click',e=>{if(e.target===el)el.classList.remove('show');}));
 </script>
-
 </body>
 </html>
