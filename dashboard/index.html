@@ -966,12 +966,85 @@ document.getElementById('btnLogout').onclick=async()=>{await signOut(auth);windo
 
 // NOTIF
 function checkNotif(){
-  if(!('Notification' in window)||Notification.permission==='granted') document.getElementById('notifBar').classList.add('hidden');
+  if(!('Notification' in window)||Notification.permission==='granted'){
+    document.getElementById('notifBar').classList.add('hidden');
+    // Langsung cek notifikasi saat halaman dibuka
+    setTimeout(()=>checkAndNotify(), 3000);
+    scheduleNotif();
+  }
 }
 document.getElementById('btnEnableNotif').onclick=async()=>{
   const p=await Notification.requestPermission();
-  if(p==='granted'){document.getElementById('notifBar').classList.add('hidden');scheduleNotif();}
+  if(p==='granted'){
+    document.getElementById('notifBar').classList.add('hidden');
+    checkAndNotify(); // Langsung cek sekarang
+    scheduleNotif();
+  }
 };
+
+// CEK & KIRIM NOTIFIKASI — scan semua project, semua task PIC ini
+async function checkAndNotify(){
+  if(!('Notification'in window)||Notification.permission!=='granted')return;
+  const today=new Date();today.setHours(0,0,0,0);
+  const warningDays=parseInt(localStorage.getItem('setting_notifDays')||'7');
+
+  let overdueList=[], warningList=[];
+
+  // Scan semua project
+  for(const proj of Object.values(projectsCache)){
+    let tasks=[];
+    // Gunakan cache jika project sedang aktif, kalau tidak fetch dulu
+    if(proj.id===currentProjId && Object.keys(tasksCache).length){
+      tasks=Object.values(tasksCache);
+    } else {
+      try{
+        const snap=await getDocs(collection(db,'projects',proj.id,'tasks'));
+        tasks=snap.docs.map(d=>d.data());
+      }catch(e){continue;}
+    }
+    tasks.forEach(t=>{
+      if(t.status==='done'||!(t.pics||[]).includes(currentName)||!t.deadline)return;
+      const dl=new Date(t.deadline);dl.setHours(0,0,0,0);
+      const diff=Math.ceil((dl-today)/86400000);
+      if(diff<0) overdueList.push({name:t.name,proj:proj.name,diff});
+      else if(diff<=warningDays) warningList.push({name:t.name,proj:proj.name,diff});
+    });
+  }
+
+  if(!overdueList.length&&!warningList.length)return;
+
+  // Kirim notifikasi
+  const title='⚠️ Dev PM — Pengingat Task';
+  let body='';
+  if(overdueList.length){
+    body+=`${overdueList.length} task OVERDUE:\n`;
+    overdueList.slice(0,3).forEach(t=>body+=`• ${t.name} (${t.proj})\n`);
+  }
+  if(warningList.length){
+    body+=`${warningList.length} task mendekati deadline:\n`;
+    warningList.slice(0,3).forEach(t=>body+=`• ${t.name} — ${t.diff} hari lagi\n`);
+  }
+
+  new Notification(title,{
+    body:body.trim(),
+    icon:'../icon-192.png',
+    requireInteraction:true, // Notifikasi tidak hilang sendiri
+    tag:'devpm-reminder' // Cegah spam — satu notif sekaligus
+  });
+}
+
+function scheduleNotif(){
+  if(!('Notification'in window)||Notification.permission!=='granted')return;
+  const h1=localStorage.getItem('setting_notif1')||'08:00';
+  const h2=localStorage.getItem('setting_notif2')||'14:00';
+  [h1,h2].forEach(timeStr=>{
+    const [hh,mm]=timeStr.split(':').map(Number);
+    const now=new Date(), t=new Date();
+    t.setHours(hh,mm,0,0);
+    if(t<=now) t.setDate(t.getDate()+1);
+    setTimeout(()=>{checkAndNotify();setInterval(checkAndNotify,86400000);},t-now);
+  });
+}
 
 // LOAD PROJECTS
 async function loadProjects(){
@@ -1095,28 +1168,42 @@ window.selectProject=(projId)=>{
   document.querySelector('.main-area').scrollTo({top:0,behavior:'smooth'});
 };
 
+// Realtime listener reference
+let unsubscribeTask = null;
+
 window.loadProject=async(projId)=>{
   const editBtn=document.getElementById('btnEditProject');
   const delBtn=document.getElementById('btnDeleteProject');
+
+  // Unsubscribe previous realtime listener
+  if(unsubscribeTask){ unsubscribeTask(); unsubscribeTask=null; }
+
   if(!projId){
-    // Show all projects overview
     document.getElementById('allProjectsSection').style.display='';
     document.getElementById('singleProjectView').style.display='none';
     editBtn.style.display='none';delBtn.style.display='none';
     document.getElementById('proj-subtitle').textContent='';
     return;
   }
-  // Show single project view
   document.getElementById('allProjectsSection').style.display='none';
   document.getElementById('singleProjectView').style.display='';
   document.getElementById('emptyState').style.display='none';
   if(currentRole==='admin'||currentRole==='sales'){editBtn.style.display='';delBtn.style.display='';}
   currentProjId=projId;
   document.getElementById('projectSelectTasks').value=projId;
-  const snap=await getDocs(collection(db,'projects',projId,'tasks'));
-  tasksCache={};
-  snap.forEach(d=>tasksCache[d.id]={id:d.id,...d.data()});
-  renderDashboard();
+
+  // REALTIME LISTENER — auto-refresh setiap ada perubahan di Firestore
+  unsubscribeTask = onSnapshot(
+    collection(db,'projects',projId,'tasks'),
+    (snap)=>{
+      tasksCache={};
+      snap.forEach(d=>tasksCache[d.id]={id:d.id,...d.data()});
+      renderDashboard();
+      // Cek notifikasi setiap ada update data
+      checkAndNotify();
+    },
+    (err)=>console.error('Realtime error:',err)
+  );
 };
 
 // RENDER DASHBOARD
@@ -1419,23 +1506,6 @@ function computeDeadlines(emailDt,packDt){
 }
 
 // NOTIF SCHEDULE
-function scheduleNotif(){
-  if(!('Notification'in window)||Notification.permission!=='granted')return;
-  const check=()=>{
-    if(!currentProjId)return;
-    const today=new Date();today.setHours(0,0,0,0);
-    const my=Object.values(tasksCache).filter(t=>t.status!=='done'&&(t.pics||[]).includes(currentName));
-    const ov=my.filter(t=>t.deadline&&new Date(t.deadline)<today);
-    const wa=my.filter(t=>{if(!t.deadline)return false;const dl=new Date(t.deadline);dl.setHours(0,0,0,0);const d=Math.ceil((dl-today)/86400000);return d>=0&&d<=3;});
-    if(ov.length||wa.length)new Notification('Dev PM — Pengingat Task',{body:`${ov.length} task overdue, ${wa.length} task mendekati deadline.`});
-  };
-  [8,14].forEach(h=>{
-    const now=new Date(),t=new Date();t.setHours(h,0,0,0);
-    if(t<=now)t.setDate(t.getDate()+1);
-    setTimeout(()=>{check();setInterval(check,86400000);},t-now);
-  });
-}
-
 // NAVIGATION
 window.showSection=(section,btn)=>{
   ['dashboard','tasks','admin'].forEach(s=>{document.getElementById('sec-'+s).style.display=s===section?'':'none';});
