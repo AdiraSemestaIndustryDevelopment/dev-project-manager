@@ -385,6 +385,16 @@ body::before {
 }
 .btn-cancel:hover{background:rgba(255,255,255,0.1);color:var(--text);}
 
+/* PROJECT OVERVIEW CARD OVERDUE BLINK */
+@keyframes projOverdueGlow {
+  0%,100% { border-color:rgba(255,68,68,0.3); box-shadow:0 0 0px rgba(255,68,68,0); }
+  50%      { border-color:rgba(255,68,68,0.9); box-shadow:0 0 18px rgba(255,68,68,0.4),0 0 40px rgba(255,68,68,0.15); }
+}
+.proj-overview-card.urgent {
+  border-left:3px solid var(--red);
+  animation: projOverdueGlow 1.6s ease-in-out infinite;
+}
+
 /* ALL PROJECTS OVERVIEW */
 .proj-overview-card {
   background:rgba(255,255,255,0.03);border:1px solid var(--border);
