@@ -346,6 +346,31 @@ body::before {
 }
 .btn-cancel:hover{background:rgba(255,255,255,0.1);color:var(--text);}
 
+/* ALL PROJECTS OVERVIEW */
+.proj-overview-card {
+  background:rgba(255,255,255,0.03);border:1px solid var(--border);
+  border-radius:14px;padding:20px 24px;margin-bottom:12px;
+  transition:all 0.2s;cursor:pointer;backdrop-filter:blur(10px);
+}
+.proj-overview-card:hover{border-color:rgba(57,255,20,0.3);background:rgba(57,255,20,0.03);}
+.proj-overview-card.urgent{border-left:3px solid var(--red);}
+.proj-overview-card.warning-card{border-left:3px solid var(--orange);}
+.proj-overview-card.ok{border-left:3px solid var(--green);}
+.proj-ov-top{display:flex;align-items:flex-start;gap:10px;margin-bottom:12px;flex-wrap:wrap;}
+.proj-ov-name{font-family:'Plus Jakarta Sans',sans-serif;font-size:15px;font-weight:700;flex:1;}
+.proj-ov-sub{font-size:11px;color:var(--text3);margin-top:2px;}
+.proj-ov-badges{display:flex;gap:6px;flex-wrap:wrap;}
+.proj-badge{padding:3px 10px;border-radius:20px;font-size:10px;font-weight:700;white-space:nowrap;}
+.proj-badge.red{background:var(--red-dim);color:var(--red);}
+.proj-badge.orange{background:var(--orange-dim);color:var(--orange);}
+.proj-badge.green{background:var(--green-dim);color:var(--green);}
+.proj-badge.gray{background:rgba(255,255,255,0.07);color:var(--text3);}
+.proj-ov-progress{display:flex;align-items:center;gap:12px;}
+.proj-ov-bar{flex:1;height:6px;background:rgba(255,255,255,0.06);border-radius:99px;overflow:hidden;}
+.proj-ov-bar-fill{height:100%;border-radius:99px;transition:width 0.6s ease;}
+.proj-ov-pct{font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;font-weight:700;min-width:36px;text-align:right;}
+.proj-ov-meta{font-size:11px;color:var(--text3);margin-top:8px;display:flex;gap:16px;flex-wrap:wrap;}
+
 /* EMPTY STATE */
 .empty-state{text-align:center;padding:80px 40px;color:var(--text3);}
 .empty-state .icon{font-size:48px;margin-bottom:16px;opacity:0.2;}
@@ -478,48 +503,93 @@ body::before {
         </div>
       </div>
 
-      <!-- PROGRESS -->
-      <div class="progress-section" id="overallProgress" style="display:none">
-        <div class="section-head">
-          <div class="section-title">Progress Keseluruhan</div>
-          <div class="section-pct" id="overallPct">0%</div>
+      <!-- ALL PROJECTS OVERVIEW (tampil saat belum pilih project) -->
+      <div id="allProjectsSection">
+        <div class="section-head" style="margin-bottom:16px;">
+          <div class="section-title">Semua Project — Urutan Urgency</div>
         </div>
-        <div class="progress-track">
-          <div class="progress-fill" id="overallBar" style="width:0%"></div>
-        </div>
+        <div id="allProjectsList"></div>
       </div>
 
-      <!-- DIVISION CARDS -->
-      <div id="divisionSection" style="display:none;margin-bottom:28px;">
-        <div class="section-head" style="margin-bottom:14px;">
-          <div class="section-title">Progress per Divisi</div>
+      <!-- SINGLE PROJECT VIEW (tampil saat project dipilih) -->
+      <div id="singleProjectView" style="display:none">
+        <!-- KPI -->
+        <div class="kpi-grid">
+          <div class="kpi-card">
+            <div class="kpi-tag">Total Task</div>
+            <div class="kpi-num purple" id="kpi-total">37</div>
+            <div class="kpi-desc">Dalam project ini</div>
+            <div class="kpi-emoji">📋</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-tag">Selesai</div>
+            <div class="kpi-num green" id="kpi-done">—</div>
+            <div class="kpi-desc" id="kpi-done-pct">—</div>
+            <div class="kpi-emoji">✅</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-tag">Overdue</div>
+            <div class="kpi-num red" id="kpi-overdue">—</div>
+            <div class="kpi-desc">Melewati deadline</div>
+            <div class="kpi-emoji">⚠️</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-tag">Mendekati Deadline</div>
+            <div class="kpi-num orange" id="kpi-warning">—</div>
+            <div class="kpi-desc">Dalam 3 hari</div>
+            <div class="kpi-emoji">⏰</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-tag">Sisa Hari Produksi</div>
+            <div class="kpi-num purple" id="kpi-proddays">—</div>
+            <div class="kpi-desc" id="kpi-proddate">Belum diset</div>
+            <div class="kpi-emoji">🏭</div>
+          </div>
         </div>
-        <div class="div-grid-wrap" id="divisionGrid"></div>
-      </div>
 
-      <!-- PIC TABLE -->
-      <div id="picSection" style="display:none">
-        <div class="section-head" style="margin-bottom:14px;">
-          <div class="section-title">KPI per PIC</div>
+        <!-- PROGRESS -->
+        <div class="progress-section" id="overallProgress">
+          <div class="section-head">
+            <div class="section-title">Progress Keseluruhan</div>
+            <div class="section-pct" id="overallPct">0%</div>
+          </div>
+          <div class="progress-track">
+            <div class="progress-fill" id="overallBar" style="width:0%"></div>
+          </div>
         </div>
-        <div class="table-wrap">
-          <table class="pic-table">
-            <thead>
-              <tr>
-                <th>PIC</th><th>Divisi</th><th>Selesai</th>
-                <th>KPI</th><th>Overdue</th><th>Status</th>
-              </tr>
-            </thead>
-            <tbody id="picTableBody"></tbody>
-          </table>
+
+        <!-- DIVISION CARDS -->
+        <div id="divisionSection" style="margin-bottom:28px;">
+          <div class="section-head" style="margin-bottom:14px;">
+            <div class="section-title">Progress per Divisi</div>
+          </div>
+          <div class="div-grid-wrap" id="divisionGrid"></div>
+        </div>
+
+        <!-- KPI PER PIC -->
+        <div id="picSection">
+          <div class="section-head" style="margin-bottom:14px;">
+            <div class="section-title">KPI per PIC</div>
+          </div>
+          <div class="table-wrap">
+            <table class="pic-table">
+              <thead>
+                <tr>
+                  <th>PIC</th><th>Divisi</th><th>Selesai</th>
+                  <th>KPI</th><th>Overdue</th><th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="picTableBody"></tbody>
+            </table>
+          </div>
         </div>
       </div>
 
       <!-- EMPTY -->
-      <div class="empty-state" id="emptyState">
+      <div class="empty-state" id="emptyState" style="display:none">
         <div class="icon">📂</div>
-        <h3>Pilih Project</h3>
-        <p>Pilih project dari dropdown di atas, atau buat project baru dengan tombol + di bawah kanan.</p>
+        <h3>Belum Ada Project</h3>
+        <p>Buat project baru dengan tombol + di bawah kanan.</p>
       </div>
     </section>
 
@@ -727,15 +797,98 @@ async function loadProjects(){
     const label=data.name+(data.kode?` (${data.kode})`:'');
     sels.forEach(sel=>{const o=document.createElement('option');o.value=d.id;o.textContent=label;sel.appendChild(o);});
   });
+  await renderAllProjects();
 }
+
+// RENDER ALL PROJECTS OVERVIEW
+async function renderAllProjects(){
+  const today=new Date();today.setHours(0,0,0,0);
+  const projects=Object.values(projectsCache);
+  if(!projects.length){
+    document.getElementById('allProjectsSection').style.display='none';
+    document.getElementById('emptyState').style.display='';
+    return;
+  }
+
+  // Load tasks for each project to get stats
+  const projStats=[];
+  for(const proj of projects){
+    const snap=await getDocs(collection(db,'projects',proj.id,'tasks'));
+    const tasks=snap.docs.map(d=>d.data());
+    const total=tasks.length;
+    const done=tasks.filter(t=>t.status==='done').length;
+    const overdue=tasks.filter(t=>t.status!=='done'&&t.deadline&&new Date(t.deadline)<today).length;
+    const warning=tasks.filter(t=>{
+      if(t.status==='done'||!t.deadline)return false;
+      const dl=new Date(t.deadline);dl.setHours(0,0,0,0);
+      const diff=Math.ceil((dl-today)/86400000);
+      return diff>=0&&diff<=7;
+    }).length;
+    const pct=total?Math.round(done/total*100):0;
+    // Urgency score: overdue x10 + warning x3 + prodDays
+    const prodDays=proj.prodDate?Math.ceil((new Date(proj.prodDate)-today)/86400000):999;
+    const urgency=overdue*10+warning*3+(prodDays<0?100:prodDays<7?50:prodDays<14?20:0);
+    projStats.push({proj,total,done,overdue,warning,pct,prodDays,urgency});
+  }
+
+  // Sort by urgency (highest first), then by prodDate
+  projStats.sort((a,b)=>b.urgency-a.urgency||(a.prodDays-b.prodDays));
+
+  const container=document.getElementById('allProjectsList');
+  container.innerHTML=projStats.map(({proj,total,done,overdue,warning,pct,prodDays})=>{
+    const cardClass=overdue>0?'urgent':warning>0?'warning-card':'ok';
+    const barColor=overdue>0?'var(--red)':warning>0?'var(--orange)':pct===100?'var(--green)':'var(--accent)';
+    const pctColor=overdue>0?'var(--red)':warning>0?'var(--orange)':pct===100?'var(--green)':'var(--accent)';
+    const prodStr=proj.prodDate?new Date(proj.prodDate).toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'}):'—';
+    const daysStr=proj.prodDate?(prodDays<0?`<span style="color:var(--red);font-weight:600">Lewat ${Math.abs(prodDays)} hari</span>`:prodDays===0?`<span style="color:var(--red);font-weight:600">HARI INI</span>`:`<span style="color:${prodDays<=7?'var(--orange)':'var(--text3)'}">H-${prodDays}</span>`):'—';
+    return `<div class="proj-overview-card ${cardClass}" onclick="selectProject('${proj.id}')">
+      <div class="proj-ov-top">
+        <div style="flex:1">
+          <div class="proj-ov-name">${proj.name}</div>
+          <div class="proj-ov-sub">${proj.kode?`Kode: ${proj.kode} &nbsp;·&nbsp; `:''}${proj.buyer?proj.buyer:''}</div>
+        </div>
+        <div class="proj-ov-badges">
+          ${overdue>0?`<span class="proj-badge red">⚠ ${overdue} Overdue</span>`:''}
+          ${warning>0?`<span class="proj-badge orange">⏰ ${warning} Mepet</span>`:''}
+          ${pct===100?`<span class="proj-badge green">✓ Selesai</span>`:''}
+          ${overdue===0&&warning===0&&pct<100?`<span class="proj-badge green">✓ On Track</span>`:''}
+        </div>
+      </div>
+      <div class="proj-ov-progress">
+        <div class="proj-ov-bar"><div class="proj-ov-bar-fill" style="width:${pct}%;background:${barColor}"></div></div>
+        <div class="proj-ov-pct" style="color:${pctColor}">${pct}%</div>
+      </div>
+      <div class="proj-ov-meta">
+        <span>📋 ${done}/${total} task selesai</span>
+        <span>🏭 Produksi: ${prodStr} &nbsp;${daysStr}</span>
+        ${proj.emailApprovedDate?`<span>📧 Email Approved: ${new Date(proj.emailApprovedDate).toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'})}</span>`:''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// SELECT PROJECT (from overview card click)
+window.selectProject=(projId)=>{
+  document.getElementById('projectSelect').value=projId;
+  loadProject(projId);
+  // Scroll to top
+  document.querySelector('.main-area').scrollTo({top:0,behavior:'smooth'});
+};
 
 window.loadProject=async(projId)=>{
   const editBtn=document.getElementById('btnEditProject');
   const delBtn=document.getElementById('btnDeleteProject');
   if(!projId){
-    document.getElementById('emptyState').style.display='';
-    editBtn.style.display='none';delBtn.style.display='none';return;
+    // Show all projects overview
+    document.getElementById('allProjectsSection').style.display='';
+    document.getElementById('singleProjectView').style.display='none';
+    editBtn.style.display='none';delBtn.style.display='none';
+    document.getElementById('proj-subtitle').textContent='';
+    return;
   }
+  // Show single project view
+  document.getElementById('allProjectsSection').style.display='none';
+  document.getElementById('singleProjectView').style.display='';
   document.getElementById('emptyState').style.display='none';
   if(currentRole==='admin'||currentRole==='sales'){editBtn.style.display='';delBtn.style.display='';}
   currentProjId=projId;
@@ -1008,11 +1161,11 @@ window.confirmDeleteProject=async()=>{
   delete projectsCache[currentProjId];currentProjId=null;tasksCache={};
   document.getElementById('btnEditProject').style.display='none';
   document.getElementById('btnDeleteProject').style.display='none';
-  document.getElementById('emptyState').style.display='';
-  document.getElementById('overallProgress').style.display='none';
-  document.getElementById('divisionSection').style.display='none';
-  document.getElementById('picSection').style.display='none';
+  document.getElementById('singleProjectView').style.display='none';
+  document.getElementById('allProjectsSection').style.display='';
+  document.getElementById('proj-subtitle').textContent='';
   document.getElementById('projectSelect').value='';
+  await renderAllProjects();
   alert('Project berhasil dihapus.');
 };
 
