@@ -1212,6 +1212,13 @@ function renderDashboard(){
   const tasks=Object.values(tasksCache);
   const today=new Date();today.setHours(0,0,0,0);
 
+  // Global parseDate helper
+  const parseDate=(str)=>{
+    if(!str)return null;
+    const[y,m,d]=str.split('-').map(Number);
+    const dt=new Date(y,m-1,d);dt.setHours(0,0,0,0);return dt;
+  };
+
   // Tampilkan nama project sebagai subtitle
   if(proj){
     const subtitle=document.getElementById('proj-subtitle');
@@ -1224,7 +1231,8 @@ function renderDashboard(){
   tasks.forEach(t=>{
     if(t.status==='done'){done++;return;}
     if(!t.deadline)return;
-    const dl=new Date(t.deadline);dl.setHours(0,0,0,0);
+    const dl=parseDate(t.deadline);
+    if(!dl)return;
     const diff=Math.ceil((dl-today)/86400000);
     if(diff<0)overdue++;else if(diff<=3)warning++;
   });
@@ -1234,7 +1242,7 @@ function renderDashboard(){
   document.getElementById('kpi-overdue').textContent=overdue;
   document.getElementById('kpi-warning').textContent=warning;
   if(proj&&proj.prodDate){
-    const pd=new Date(proj.prodDate);pd.setHours(0,0,0,0);
+    const pd=parseDate(proj.prodDate)||new Date(proj.prodDate);
     const diff=Math.ceil((pd-today)/86400000);
     document.getElementById('kpi-proddays').textContent=diff>0?diff:0;
     document.getElementById('kpi-proddate').textContent='Produksi: '+pd.toLocaleDateString('id-ID');
@@ -1256,11 +1264,18 @@ function renderDashboard(){
     const divDone=divTasks.filter(t=>t.status==='done').length;
     const divPct=Math.round(divDone/divTasks.length*100);
 
-    // Check if any task is overdue
+    // Robust date parse helper (handles "YYYY-MM-DD" string correctly)
+    const parseDate=(str)=>{
+      if(!str)return null;
+      const[y,m,d]=str.split('-').map(Number);
+      const dt=new Date(y,m-1,d);dt.setHours(0,0,0,0);return dt;
+    };
+
+    // Check if any task is overdue — robust date parsing
     const hasOverdue=divTasks.some(t=>{
       if(t.status==='done'||!t.deadline)return false;
-      const dl=new Date(t.deadline);dl.setHours(0,0,0,0);
-      return dl<=today;
+      const dl=parseDate(t.deadline);
+      return dl && dl<=today;
     });
 
     const card=document.createElement('div');
@@ -1276,12 +1291,14 @@ function renderDashboard(){
           let st='pending',dlC='',nC='';
           if(t.status==='done'){st='done';nC='done';}
           else if(t.deadline){
-            const dl=new Date(t.deadline);dl.setHours(0,0,0,0);
-            const diff=Math.ceil((dl-today)/86400000);
-            if(diff<0){st='overdue';nC='overdue';dlC='overdue';}
-            else if(diff<=3){st='warning';dlC='warning';}
+            const dl=parseDate(t.deadline);
+            if(dl){
+              const diff=Math.ceil((dl-today)/86400000);
+              if(diff<0){st='overdue';nC='overdue';dlC='overdue';}
+              else if(diff<=3){st='warning';dlC='warning';}
+            }
           }
-          const dlStr=t.deadline?new Date(t.deadline).toLocaleDateString('id-ID',{day:'numeric',month:'short'}):'–';
+          const dlStr=t.deadline?parseDate(t.deadline)?.toLocaleDateString('id-ID',{day:'numeric',month:'short'}):'–';
           const picColor=t.status==='done'?'var(--green)':st==='overdue'?'var(--red)':st==='warning'?'var(--orange)':'var(--text3)';
           const picStyle=`color:${picColor};font-weight:${st==='overdue'||st==='warning'?'600':'400'};`;
           const rowBg=st==='overdue'?'background:rgba(255,68,68,0.06);':st==='warning'?'background:rgba(255,170,0,0.04);':'';
