@@ -373,6 +373,15 @@ body::before {
 .proj-ov-pct{font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;font-weight:700;min-width:36px;text-align:right;}
 .proj-ov-meta{font-size:11px;color:var(--text3);margin-top:8px;display:flex;gap:16px;flex-wrap:wrap;}
 
+/* ADMIN TABS */
+.admin-tab {
+  padding:10px 18px;background:transparent;border:none;border-bottom:2px solid transparent;
+  color:var(--text3);font-family:'Inter',sans-serif;font-size:13px;font-weight:500;
+  cursor:pointer;transition:all 0.2s;margin-bottom:-1px;
+}
+.admin-tab:hover{color:var(--text);}
+.admin-tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+
 /* EMPTY STATE */
 .empty-state{text-align:center;padding:80px 40px;color:var(--text3);}
 .empty-state .icon{font-size:48px;margin-bottom:16px;opacity:0.2;}
@@ -599,8 +608,154 @@ body::before {
 
     <!-- ══ ADMIN ══ -->
     <section id="sec-admin" style="display:none">
-      <div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:18px;font-weight:700;margin-bottom:20px;">Admin Panel</div>
-      <div id="adminContent" style="color:var(--text3);font-size:13px;">Fitur admin akan hadir segera.</div>
+      <!-- Admin Header -->
+      <div style="margin-bottom:28px;">
+        <div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:22px;font-weight:800;">Admin Panel</div>
+        <div style="font-size:12px;color:var(--text3);margin-top:4px;">Kelola sistem, pantau aktivitas, dan export data</div>
+      </div>
+
+      <!-- Admin Tabs -->
+      <div style="display:flex;gap:4px;margin-bottom:24px;border-bottom:1px solid var(--border);padding-bottom:0;">
+        <button class="admin-tab active" onclick="switchAdminTab('log')" id="tab-log">📋 Log Aktivitas</button>
+        <button class="admin-tab" onclick="switchAdminTab('notif')" id="tab-notif">🔔 Notifikasi</button>
+        <button class="admin-tab" onclick="switchAdminTab('export')" id="tab-export">📥 Export Data</button>
+        <button class="admin-tab" onclick="switchAdminTab('settings')" id="tab-settings">⚙️ Pengaturan</button>
+      </div>
+
+      <!-- TAB: Log Aktivitas -->
+      <div id="admin-log">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px;">
+          <div style="font-size:13px;color:var(--text2);font-weight:600;">Riwayat aktivitas semua PIC</div>
+          <div style="display:flex;gap:8px;">
+            <select class="form-select" id="logFilterProject" style="padding:7px 12px;font-size:12px;min-width:180px;" onchange="loadActivityLog()">
+              <option value="">Semua Project</option>
+            </select>
+            <select class="form-select" id="logFilterType" style="padding:7px 12px;font-size:12px;" onchange="loadActivityLog()">
+              <option value="">Semua Tipe</option>
+              <option value="task_done">Task Selesai</option>
+              <option value="login">Login</option>
+              <option value="view">Buka Halaman</option>
+            </select>
+            <button class="btn-primary" onclick="loadActivityLog()" style="padding:7px 16px;font-size:12px;flex:none;">🔄 Refresh</button>
+          </div>
+        </div>
+
+        <!-- Last Seen per PIC -->
+        <div style="margin-bottom:20px;">
+          <div style="font-size:11px;font-weight:700;letter-spacing:0.1em;color:var(--text3);text-transform:uppercase;margin-bottom:10px;">Terakhir Online per PIC</div>
+          <div class="table-wrap">
+            <table class="pic-table">
+              <thead><tr><th>PIC</th><th>Divisi</th><th>Terakhir Buka Web</th><th>Status Online</th></tr></thead>
+              <tbody id="lastSeenTableBody"><tr><td colspan="4" style="text-align:center;color:var(--text3);padding:20px">Loading...</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Activity Log -->
+        <div style="font-size:11px;font-weight:700;letter-spacing:0.1em;color:var(--text3);text-transform:uppercase;margin-bottom:10px;">Log Aktivitas Terbaru</div>
+        <div class="table-wrap">
+          <table class="pic-table">
+            <thead><tr><th>Waktu</th><th>PIC</th><th>Aktivitas</th><th>Detail</th><th>Project</th></tr></thead>
+            <tbody id="activityLogBody"><tr><td colspan="5" style="text-align:center;color:var(--text3);padding:20px">Loading...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- TAB: Notifikasi -->
+      <div id="admin-notif" style="display:none">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px;">
+          <div style="font-size:13px;color:var(--text2);font-weight:600;">Rekap task yang memicu notifikasi pengingat</div>
+          <button class="btn-primary" onclick="loadNotifLog()" style="padding:7px 16px;font-size:12px;flex:none;">🔄 Refresh</button>
+        </div>
+        <div class="table-wrap">
+          <table class="pic-table">
+            <thead><tr><th>Task</th><th>PIC</th><th>Divisi</th><th>Deadline</th><th>Status Notif</th><th>Terakhir Dikirim</th></tr></thead>
+            <tbody id="notifLogBody"><tr><td colspan="6" style="text-align:center;color:var(--text3);padding:20px">Loading...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- TAB: Export Data -->
+      <div id="admin-export" style="display:none">
+        <div style="font-size:13px;color:var(--text2);font-weight:600;margin-bottom:20px;">Download rekap data dalam format CSV</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;">
+          <div class="kpi-card" style="cursor:pointer" onclick="exportProgressCSV()">
+            <div class="kpi-tag">Export Progress</div>
+            <div style="font-size:28px;margin:8px 0;">📊</div>
+            <div style="font-size:13px;font-weight:600;margin-bottom:4px;">Progress Semua Project</div>
+            <div style="font-size:11px;color:var(--text3);">Status task, % selesai, overdue per project</div>
+            <div style="margin-top:12px;padding:6px 14px;background:var(--accent);color:#000;border-radius:8px;font-size:12px;font-weight:700;text-align:center;display:inline-block;">Download CSV</div>
+          </div>
+          <div class="kpi-card" style="cursor:pointer" onclick="exportKpiCSV()">
+            <div class="kpi-tag">Export KPI</div>
+            <div style="font-size:28px;margin:8px 0;">👥</div>
+            <div style="font-size:13px;font-weight:600;margin-bottom:4px;">KPI per PIC</div>
+            <div style="font-size:11px;color:var(--text3);">Performa setiap PIC lintas semua project</div>
+            <div style="margin-top:12px;padding:6px 14px;background:var(--accent);color:#000;border-radius:8px;font-size:12px;font-weight:700;text-align:center;display:inline-block;">Download CSV</div>
+          </div>
+          <div class="kpi-card" style="cursor:pointer" onclick="exportActivityCSV()">
+            <div class="kpi-tag">Export Log</div>
+            <div style="font-size:28px;margin:8px 0;">📋</div>
+            <div style="font-size:13px;font-weight:600;margin-bottom:4px;">Log Aktivitas</div>
+            <div style="font-size:11px;color:var(--text3);">Semua aktivitas: login, task selesai, dll</div>
+            <div style="margin-top:12px;padding:6px 14px;background:var(--accent);color:#000;border-radius:8px;font-size:12px;font-weight:700;text-align:center;display:inline-block;">Download CSV</div>
+          </div>
+          <div class="kpi-card" style="cursor:pointer" onclick="exportDeadlineCSV()">
+            <div class="kpi-tag">Export Deadline</div>
+            <div style="font-size:28px;margin:8px 0;">⏰</div>
+            <div style="font-size:13px;font-weight:600;margin-bottom:4px;">Semua Deadline Task</div>
+            <div style="font-size:11px;color:var(--text3);">Daftar deadline setiap task di semua project</div>
+            <div style="margin-top:12px;padding:6px 14px;background:var(--accent);color:#000;border-radius:8px;font-size:12px;font-weight:700;text-align:center;display:inline-block;">Download CSV</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB: Pengaturan -->
+      <div id="admin-settings" style="display:none">
+        <div style="font-size:13px;color:var(--text2);font-weight:600;margin-bottom:20px;">Konfigurasi sistem notifikasi dan threshold</div>
+        <div style="max-width:520px;display:grid;gap:20px;">
+
+          <div class="kpi-card">
+            <div style="font-size:13px;font-weight:700;margin-bottom:16px;color:var(--text);">⏰ Threshold Warning Deadline</div>
+            <div class="form-group">
+              <label class="form-label">Tampilkan warning mulai H- (hari)</label>
+              <input class="form-input" type="number" id="setting-warningDays" min="1" max="30" value="3" style="max-width:120px;">
+              <div style="font-size:11px;color:var(--text3);margin-top:6px;">Task akan ditandai oranye jika deadline dalam X hari ke depan</div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Kirim notifikasi mulai H- (hari)</label>
+              <input class="form-input" type="number" id="setting-notifDays" min="1" max="30" value="7" style="max-width:120px;">
+              <div style="font-size:11px;color:var(--text3);margin-top:6px;">Browser notifikasi dikirim jika deadline dalam X hari ke depan</div>
+            </div>
+          </div>
+
+          <div class="kpi-card">
+            <div style="font-size:13px;font-weight:700;margin-bottom:16px;color:var(--text);">🔔 Jadwal Notifikasi Harian</div>
+            <div class="form-group">
+              <label class="form-label">Jam notifikasi pertama</label>
+              <input class="form-input" type="time" id="setting-notif1" value="08:00" style="max-width:140px;">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Jam notifikasi kedua</label>
+              <input class="form-input" type="time" id="setting-notif2" value="14:00" style="max-width:140px;">
+            </div>
+          </div>
+
+          <div class="kpi-card">
+            <div style="font-size:13px;font-weight:700;margin-bottom:16px;color:var(--text);">⚠️ Threshold Produksi Urgent</div>
+            <div class="form-group">
+              <label class="form-label">Tandai merah jika sisa hari produksi ≤</label>
+              <input class="form-input" type="number" id="setting-prodUrgent" min="1" max="30" value="7" style="max-width:120px;">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Tandai oranye jika sisa hari produksi ≤</label>
+              <input class="form-input" type="number" id="setting-prodWarning" min="1" max="60" value="14" style="max-width:120px;">
+            </div>
+          </div>
+
+          <button class="btn-primary" onclick="saveSettings()" style="padding:13px;font-size:14px;">💾 Simpan Pengaturan</button>
+        </div>
+      </div>
     </section>
 
   </div>
@@ -761,6 +916,13 @@ onAuthStateChanged(auth, async(user)=>{
   if(currentRole==='sales'||currentRole==='admin') document.getElementById('fabNewProject').classList.add('show');
   await loadProjects();
   checkNotif();
+  // Record last seen
+  try {
+    await setDoc(doc(db,'user_activity',user.email),{
+      name:info.name,division:info.division,role:info.role,
+      email:user.email,lastSeen:Timestamp.now()
+    },{merge:true});
+  } catch(e){}
 });
 
 document.getElementById('btnLogout').onclick=async()=>{await signOut(auth);window.location.href='../';};
@@ -1235,6 +1397,292 @@ window.showSection=(section,btn)=>{
   document.querySelectorAll('.nav-item').forEach(b=>b.classList.remove('active'));
   if(btn)btn.classList.add('active');
   document.getElementById('pageTitle').textContent=section==='dashboard'?'Dashboard':section==='tasks'?'My Tasks':'Admin Panel';
+  if(section==='admin') initAdminPanel();
+};
+
+// ══════════════════════════════════════════
+// ADMIN FUNCTIONS
+// ══════════════════════════════════════════
+
+// Admin Tab Switch
+window.switchAdminTab=(tab)=>{
+  ['log','notif','export','settings'].forEach(t=>{
+    document.getElementById('admin-'+t).style.display=t===tab?'':'none';
+    document.getElementById('tab-'+t).classList.toggle('active',t===tab);
+  });
+  if(tab==='log') loadActivityLog();
+  if(tab==='notif') loadNotifLog();
+  if(tab==='settings') loadSettings();
+};
+
+// Init admin — load log filter projects & last seen
+async function initAdminPanel(){
+  // Populate project filter
+  const sel=document.getElementById('logFilterProject');
+  if(sel.options.length<=1){
+    Object.values(projectsCache).forEach(p=>{
+      const o=document.createElement('option');o.value=p.id;o.textContent=p.name;sel.appendChild(o);
+    });
+  }
+  switchAdminTab('log');
+  // Record last seen for current user
+  await recordLastSeen();
+}
+
+// Record last seen to Firestore
+async function recordLastSeen(){
+  if(!currentUser) return;
+  try {
+    await setDoc(doc(db,'user_activity',currentUser.email),{
+      name: currentName, division: currentDiv, role: currentRole,
+      lastSeen: Timestamp.now(), email: currentUser.email
+    },{merge:true});
+  } catch(e){}
+}
+
+// Load Last Seen Table
+async function loadLastSeenTable(){
+  const tbody=document.getElementById('lastSeenTableBody');
+  try {
+    const snap=await getDocs(collection(db,'user_activity'));
+    const now=new Date();
+    if(!snap.docs.length){
+      tbody.innerHTML=`<tr><td colspan="4" style="text-align:center;color:var(--text3);padding:20px">Belum ada data. PIC perlu login terlebih dahulu.</td></tr>`;
+      return;
+    }
+    const rows=snap.docs.map(d=>{
+      const data=d.data();
+      const lastSeen=data.lastSeen?.toDate?.();
+      const diffMs=lastSeen?now-lastSeen:null;
+      const diffMin=diffMs?Math.floor(diffMs/60000):null;
+      const timeStr=lastSeen?lastSeen.toLocaleString('id-ID',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}):'—';
+      let onlineBadge='';
+      if(diffMin===null) onlineBadge=`<span class="chip" style="background:rgba(255,255,255,0.07);color:var(--text3)">Belum pernah</span>`;
+      else if(diffMin<5) onlineBadge=`<span class="chip green">🟢 Online</span>`;
+      else if(diffMin<60) onlineBadge=`<span class="chip green">${diffMin} menit lalu</span>`;
+      else if(diffMin<1440) onlineBadge=`<span class="chip orange">${Math.floor(diffMin/60)} jam lalu</span>`;
+      else onlineBadge=`<span class="chip" style="background:rgba(255,255,255,0.07);color:var(--text3)">${Math.floor(diffMin/1440)} hari lalu</span>`;
+      return `<tr>
+        <td><div class="pic-name-cell">${data.name||d.id}</div></td>
+        <td><div style="color:var(--text3);font-size:12px">${data.division||'—'}</div></td>
+        <td style="font-size:12px">${timeStr}</td>
+        <td>${onlineBadge}</td>
+      </tr>`;
+    });
+    tbody.innerHTML=rows.join('');
+  } catch(e){
+    tbody.innerHTML=`<tr><td colspan="4" style="text-align:center;color:var(--text3);padding:20px">Gagal load data.</td></tr>`;
+  }
+}
+
+// Load Activity Log
+window.loadActivityLog=async()=>{
+  await loadLastSeenTable();
+  const tbody=document.getElementById('activityLogBody');
+  const projFilter=document.getElementById('logFilterProject').value;
+  const typeFilter=document.getElementById('logFilterType').value;
+  try {
+    // Collect task_done events from all projects
+    const logs=[];
+    const projs=projFilter?[{id:projFilter,...projectsCache[projFilter]}]:Object.values(projectsCache);
+    for(const proj of projs){
+      const snap=await getDocs(collection(db,'projects',proj.id,'tasks'));
+      snap.forEach(d=>{
+        const t=d.data();
+        if(t.status==='done'&&t.doneAt){
+          if(!typeFilter||typeFilter==='task_done'){
+            logs.push({
+              time:t.doneAt.toDate?.(),
+              pic:t.doneBy||'—',
+              type:'task_done',
+              detail:`✅ Selesai: ${t.name}`,
+              project:proj.name,
+              division:t.division
+            });
+          }
+        }
+      });
+    }
+    // Last seen as login events
+    if(!typeFilter||typeFilter==='login'||typeFilter==='view'){
+      const snap=await getDocs(collection(db,'user_activity'));
+      snap.forEach(d=>{
+        const data=d.data();
+        if(data.lastSeen){
+          logs.push({
+            time:data.lastSeen.toDate?.(),
+            pic:data.name||d.id,
+            type:'view',
+            detail:'👁 Membuka Dashboard',
+            project:'—',
+            division:data.division||'—'
+          });
+        }
+      });
+    }
+    // Sort newest first
+    logs.sort((a,b)=>(b.time||0)-(a.time||0));
+    if(!logs.length){
+      tbody.innerHTML=`<tr><td colspan="5" style="text-align:center;color:var(--text3);padding:20px">Belum ada aktivitas tercatat.</td></tr>`;
+      return;
+    }
+    tbody.innerHTML=logs.slice(0,100).map(log=>{
+      const timeStr=log.time?log.time.toLocaleString('id-ID',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}):'—';
+      const typeBadge=log.type==='task_done'?`<span class="chip green">Task Selesai</span>`:
+        log.type==='login'?`<span class="chip" style="background:var(--cyan-dim);color:var(--cyan)">Login</span>`:
+        `<span class="chip" style="background:rgba(255,255,255,0.07);color:var(--text3)">Buka Web</span>`;
+      return `<tr>
+        <td style="font-size:11px;color:var(--text3);white-space:nowrap">${timeStr}</td>
+        <td><div class="pic-name-cell">${log.pic}</div><div style="font-size:10px;color:var(--text3)">${log.division}</div></td>
+        <td>${typeBadge}</td>
+        <td style="font-size:12px;color:var(--text2)">${log.detail}</td>
+        <td style="font-size:12px;color:var(--text3)">${log.project}</td>
+      </tr>`;
+    }).join('');
+  } catch(e){
+    tbody.innerHTML=`<tr><td colspan="5" style="text-align:center;color:var(--text3);padding:20px">Gagal load log.</td></tr>`;
+  }
+};
+
+// Load Notif Log
+window.loadNotifLog=async()=>{
+  const tbody=document.getElementById('notifLogBody');
+  const today=new Date();today.setHours(0,0,0,0);
+  const warningDays=parseInt(localStorage.getItem('setting_warningDays')||'3');
+  const notifDays=parseInt(localStorage.getItem('setting_notifDays')||'7');
+  try {
+    const rows=[];
+    for(const proj of Object.values(projectsCache)){
+      const snap=await getDocs(collection(db,'projects',proj.id,'tasks'));
+      snap.forEach(d=>{
+        const t=d.data();
+        if(t.status==='done'||!t.deadline) return;
+        const dl=new Date(t.deadline);dl.setHours(0,0,0,0);
+        const diff=Math.ceil((dl-today)/86400000);
+        if(diff<0||diff<=notifDays){
+          rows.push({t,proj,diff});
+        }
+      });
+    }
+    rows.sort((a,b)=>a.diff-b.diff);
+    if(!rows.length){tbody.innerHTML=`<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:20px">Tidak ada task yang memicu notifikasi saat ini.</td></tr>`;return;}
+    tbody.innerHTML=rows.map(({t,proj,diff})=>{
+      const dlStr=new Date(t.deadline).toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'});
+      const urgency=diff<0?`<span class="chip red">⚠ Overdue ${Math.abs(diff)} hari</span>`:
+        diff===0?`<span class="chip red">HARI INI</span>`:
+        diff<=warningDays?`<span class="chip orange">⏰ ${diff} hari lagi</span>`:
+        `<span class="chip" style="background:rgba(255,255,255,0.07);color:var(--text3)">${diff} hari lagi</span>`;
+      const notifSent=diff<=notifDays?`<span class="chip green">✓ Aktif</span>`:`<span class="chip gray">—</span>`;
+      return `<tr>
+        <td style="font-size:12px">${t.name}</td>
+        <td style="font-size:12px;color:var(--accent)">${(t.pics||[]).join(', ')}</td>
+        <td style="font-size:11px;color:var(--text3)">${t.division}</td>
+        <td style="font-size:12px">${dlStr}</td>
+        <td>${urgency}</td>
+        <td>${notifSent}</td>
+      </tr>`;
+    }).join('');
+  } catch(e){
+    tbody.innerHTML=`<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:20px">Gagal load data.</td></tr>`;
+  }
+};
+
+// Export CSV helper
+function downloadCSV(filename, rows){
+  const csv=rows.map(r=>r.map(c=>typeof c==='string'&&c.includes(',')? `"${c}"`:c).join(',')).join('\n');
+  const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8;'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=filename;a.click();
+}
+
+window.exportProgressCSV=async()=>{
+  const today=new Date();today.setHours(0,0,0,0);
+  const rows=[['Project','Kode','Buyer','Total Task','Selesai','Overdue','% Progress','Tanggal Produksi']];
+  for(const proj of Object.values(projectsCache)){
+    const snap=await getDocs(collection(db,'projects',proj.id,'tasks'));
+    const tasks=snap.docs.map(d=>d.data());
+    const done=tasks.filter(t=>t.status==='done').length;
+    const overdue=tasks.filter(t=>t.status!=='done'&&t.deadline&&new Date(t.deadline)<today).length;
+    const pct=tasks.length?Math.round(done/tasks.length*100):0;
+    rows.push([proj.name,proj.kode||'',proj.buyer||'',tasks.length,done,overdue,pct+'%',proj.prodDate||'']);
+  }
+  downloadCSV(`progress-semua-project-${new Date().toISOString().split('T')[0]}.csv`,rows);
+};
+
+window.exportKpiCSV=async()=>{
+  const today=new Date();today.setHours(0,0,0,0);
+  const picMap={};
+  for(const proj of Object.values(projectsCache)){
+    const snap=await getDocs(collection(db,'projects',proj.id,'tasks'));
+    snap.forEach(d=>{
+      const t=d.data();
+      (t.pics||[]).forEach(pic=>{
+        if(!picMap[pic])picMap[pic]={division:t.division,tasks:0,done:0,overdue:0};
+        picMap[pic].tasks++;
+        if(t.status==='done')picMap[pic].done++;
+        else if(t.deadline&&new Date(t.deadline)<today)picMap[pic].overdue++;
+      });
+    });
+  }
+  const rows=[['PIC','Divisi','Total Task','Selesai','Overdue','KPI %']];
+  Object.entries(picMap).sort((a,b)=>a[0].localeCompare(b[0])).forEach(([name,d])=>{
+    rows.push([name,d.division,d.tasks,d.done,d.overdue,Math.round(d.done/d.tasks*100)+'%']);
+  });
+  downloadCSV(`kpi-per-pic-${new Date().toISOString().split('T')[0]}.csv`,rows);
+};
+
+window.exportActivityCSV=async()=>{
+  const rows=[['Waktu','PIC','Divisi','Tipe','Detail','Project']];
+  for(const proj of Object.values(projectsCache)){
+    const snap=await getDocs(collection(db,'projects',proj.id,'tasks'));
+    snap.forEach(d=>{
+      const t=d.data();
+      if(t.status==='done'&&t.doneAt){
+        const time=t.doneAt.toDate?.().toLocaleString('id-ID')||'';
+        rows.push([time,t.doneBy||'','',`Task Selesai`,t.name,proj.name]);
+      }
+    });
+  }
+  const actSnap=await getDocs(collection(db,'user_activity'));
+  actSnap.forEach(d=>{
+    const data=d.data();
+    if(data.lastSeen){
+      const time=data.lastSeen.toDate?.().toLocaleString('id-ID')||'';
+      rows.push([time,data.name||d.id,data.division||'','Buka Web','Dashboard','—']);
+    }
+  });
+  rows.sort((a,b)=>b[0].localeCompare(a[0]));
+  downloadCSV(`log-aktivitas-${new Date().toISOString().split('T')[0]}.csv`,rows);
+};
+
+window.exportDeadlineCSV=async()=>{
+  const rows=[['Project','Task','Divisi','PIC','Deadline','Status','Actual Date','Done By']];
+  for(const proj of Object.values(projectsCache)){
+    const snap=await getDocs(collection(db,'projects',proj.id,'tasks'));
+    snap.forEach(d=>{
+      const t=d.data();
+      rows.push([proj.name,t.name,t.division,(t.pics||[]).join('; '),t.deadline||'',t.status,t.actualDate||'',t.doneBy||'']);
+    });
+  }
+  downloadCSV(`deadline-tasks-${new Date().toISOString().split('T')[0]}.csv`,rows);
+};
+
+// Settings
+window.loadSettings=()=>{
+  document.getElementById('setting-warningDays').value=localStorage.getItem('setting_warningDays')||'3';
+  document.getElementById('setting-notifDays').value=localStorage.getItem('setting_notifDays')||'7';
+  document.getElementById('setting-notif1').value=localStorage.getItem('setting_notif1')||'08:00';
+  document.getElementById('setting-notif2').value=localStorage.getItem('setting_notif2')||'14:00';
+  document.getElementById('setting-prodUrgent').value=localStorage.getItem('setting_prodUrgent')||'7';
+  document.getElementById('setting-prodWarning').value=localStorage.getItem('setting_prodWarning')||'14';
+};
+window.saveSettings=()=>{
+  localStorage.setItem('setting_warningDays',document.getElementById('setting-warningDays').value);
+  localStorage.setItem('setting_notifDays',document.getElementById('setting-notifDays').value);
+  localStorage.setItem('setting_notif1',document.getElementById('setting-notif1').value);
+  localStorage.setItem('setting_notif2',document.getElementById('setting-notif2').value);
+  localStorage.setItem('setting_prodUrgent',document.getElementById('setting-prodUrgent').value);
+  localStorage.setItem('setting_prodWarning',document.getElementById('setting-prodWarning').value);
+  alert('✓ Pengaturan berhasil disimpan!');
 };
 
 window.openNewProjectModal=()=>document.getElementById('modalNewProject').classList.add('show');
