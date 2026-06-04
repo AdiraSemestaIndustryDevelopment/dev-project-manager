@@ -456,7 +456,7 @@ body::before {
       <div class="proj-select-wrap">
         <label>PROJECT</label>
         <select class="select-proj" id="projectSelect" onchange="loadProject(this.value)">
-          <option value="">— Pilih Project —</option>
+          <option value="">— Lobby —</option>
         </select>
       </div>
       <button class="btn-icon" id="btnEditProject" onclick="openEditProjectModal()" title="Edit Project" style="display:none">✏️</button>
@@ -476,6 +476,24 @@ body::before {
           <div class="section-title">Semua Project — Urutan Urgency</div>
         </div>
         <div id="allProjectsList"></div>
+
+        <!-- OVERALL KPI PER PIC -->
+        <div style="margin-top:32px;">
+          <div class="section-head" style="margin-bottom:14px;">
+            <div class="section-title">KPI Per PIC — Semua Project</div>
+          </div>
+          <div class="table-wrap">
+            <table class="pic-table">
+              <thead>
+                <tr>
+                  <th>PIC</th><th>Divisi</th><th>Selesai</th>
+                  <th>KPI</th><th>Overdue</th><th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="overallPicTableBody"></tbody>
+            </table>
+          </div>
+        </div>
       </div>
 
       <!-- SINGLE PROJECT VIEW (tampil saat project dipilih) -->
@@ -570,7 +588,7 @@ body::before {
         <div class="proj-select-wrap">
           <label>PROJECT</label>
           <select class="select-proj" id="projectSelectTasks" onchange="loadMyTasks(this.value)">
-            <option value="">— Pilih Project —</option>
+            <option value="">— Lobby —</option>
           </select>
         </div>
       </div>
@@ -832,6 +850,40 @@ async function renderAllProjects(){
       </div>
     </div>`;
   }).join('');
+
+  // OVERALL KPI PER PIC (semua project digabung)
+  const picMap={};
+  for(const{proj} of projStats){
+    const snap=await getDocs(collection(db,'projects',proj.id,'tasks'));
+    snap.forEach(d=>{
+      const t=d.data();
+      (t.pics||[]).forEach(pic=>{
+        if(!picMap[pic])picMap[pic]={tasks:[],done:0,overdue:0,division:t.division};
+        picMap[pic].tasks.push(t);
+        if(t.status==='done')picMap[pic].done++;
+        else if(t.deadline&&new Date(t.deadline)<today)picMap[pic].overdue++;
+      });
+    });
+  }
+  const tbody=document.getElementById('overallPicTableBody');
+  if(tbody){
+    tbody.innerHTML=Object.entries(picMap)
+      .sort((a,b)=>b[1].overdue-a[1].overdue||(b[1].tasks.length-b[1].done)-(a[1].tasks.length-a[1].done))
+      .map(([name,data])=>{
+        const kpi=Math.round(data.done/data.tasks.length*100);
+        const bc=kpi===100?'var(--green)':data.overdue>0?'var(--red)':'var(--orange)';
+        const sc=kpi===100?'green':data.overdue>0?'red':'orange';
+        const sl=kpi===100?'✓ Selesai':data.overdue>0?'Ada Overdue':'On Track';
+        return `<tr>
+          <td><div class="pic-name-cell">${name}</div></td>
+          <td><div style="color:var(--text3);font-size:12px">${data.division}</div></td>
+          <td style="font-weight:600">${data.done}<span style="color:var(--text3);font-weight:400"> / ${data.tasks.length}</span></td>
+          <td><div class="bar-wrap"><div class="mini-bar"><div class="mini-fill" style="width:${kpi}%;background:${bc}"></div></div><span style="font-size:12px;color:${bc};font-weight:600">${kpi}%</span></div></td>
+          <td style="color:${data.overdue>0?'var(--red)':'var(--text3)'};font-weight:${data.overdue>0?'600':'400'}">${data.overdue}</td>
+          <td><span class="chip ${sc}">${sl}</span></td>
+        </tr>`;
+      }).join('');
+  }
 }
 
 // SELECT PROJECT (from overview card click)
