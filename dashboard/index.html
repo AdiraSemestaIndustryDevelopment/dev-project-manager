@@ -424,7 +424,8 @@ body::before {
   <div class="topbar">
     <div class="topbar-left">
       <h1 id="pageTitle">Dashboard</h1>
-      <p id="todayDate">—</p>
+      <p id="todayDate" style="font-size:11px;color:var(--text3);margin-top:1px;">—</p>
+      <p id="proj-subtitle" style="font-size:12px;color:var(--accent);font-weight:600;margin-top:1px;min-height:14px;"></p>
     </div>
     <div class="topbar-right">
       <div class="proj-select-wrap">
@@ -557,7 +558,8 @@ body::before {
     <button class="modal-close" onclick="closeModal('modalEditProject')">✕</button>
     <div class="modal-title">Edit Project</div>
     <div class="modal-sub">Ubah data project yang sudah ada</div>
-    <div class="form-group"><label class="form-label">Nama / Kode Project</label><input class="form-input" type="text" id="edit-projName"></div>
+    <div class="form-group"><label class="form-label">Nama Project</label><input class="form-input" type="text" id="edit-projDisplayName" placeholder="e.g. Glove Order Nike Q3 2024"></div>
+    <div class="form-group"><label class="form-label">Kode Project</label><input class="form-input" type="text" id="edit-projName"></div>
     <div class="form-group"><label class="form-label">Buyer / Klien</label><input class="form-input" type="text" id="edit-buyer"></div>
     <div class="form-group"><label class="form-label">Tanggal Email Approved</label><input class="form-input" type="date" id="edit-emailApproved"></div>
     <div class="form-group"><label class="form-label">Tanggal Mulai Produksi</label><input class="form-input" type="date" id="edit-prodDate"></div>
@@ -576,7 +578,8 @@ body::before {
     <button class="modal-close" onclick="closeModal('modalNewProject')">✕</button>
     <div class="modal-title">Project Baru</div>
     <div class="modal-sub">Generate 37 task otomatis dari tanggal Email Approved</div>
-    <div class="form-group"><label class="form-label">Nama / Kode Project</label><input class="form-input" type="text" id="inp-projName" placeholder="e.g. ORDER-2024-GLV-001"></div>
+    <div class="form-group"><label class="form-label">Nama Project</label><input class="form-input" type="text" id="inp-projDisplayName" placeholder="e.g. Glove Order Nike Q3 2024"></div>
+    <div class="form-group"><label class="form-label">Kode Project</label><input class="form-input" type="text" id="inp-projName" placeholder="e.g. ORDER-2024-GLV-001"></div>
     <div class="form-group"><label class="form-label">Buyer / Klien</label><input class="form-input" type="text" id="inp-buyer" placeholder="e.g. PT. XYZ International"></div>
     <div class="form-group"><label class="form-label">Tanggal Email Approved (H+0)</label><input class="form-input" type="date" id="inp-emailApproved"></div>
     <div class="form-group"><label class="form-label">Tanggal Mulai Produksi</label><input class="form-input" type="date" id="inp-prodDate"></div>
@@ -720,7 +723,9 @@ async function loadProjects(){
   const sels=[document.getElementById('projectSelect'),document.getElementById('projectSelectTasks')];
   snap.forEach(d=>{
     projectsCache[d.id]={id:d.id,...d.data()};
-    sels.forEach(sel=>{const o=document.createElement('option');o.value=d.id;o.textContent=d.data().name;sel.appendChild(o);});
+    const data=d.data();
+    const label=data.name+(data.kode?` (${data.kode})`:'');
+    sels.forEach(sel=>{const o=document.createElement('option');o.value=d.id;o.textContent=label;sel.appendChild(o);});
   });
 }
 
@@ -746,6 +751,15 @@ function renderDashboard(){
   const proj=projectsCache[currentProjId];
   const tasks=Object.values(tasksCache);
   const today=new Date();today.setHours(0,0,0,0);
+
+  // Tampilkan nama project sebagai subtitle
+  if(proj){
+    const subtitle=document.getElementById('proj-subtitle');
+    if(subtitle){
+      subtitle.textContent=proj.name+(proj.kode?` · ${proj.kode}`:'')+
+        (proj.buyer?` · ${proj.buyer}`:'');
+    }
+  }
   let done=0,overdue=0,warning=0;
   tasks.forEach(t=>{
     if(t.status==='done'){done++;return;}
@@ -913,14 +927,16 @@ window.openTaskDetail=(taskId)=>{
 
 // CREATE PROJECT
 window.createProject=async()=>{
-  const name=document.getElementById('inp-projName').value.trim();
+  const displayName=document.getElementById('inp-projDisplayName').value.trim();
+  const kode=document.getElementById('inp-projName').value.trim();
   const buyer=document.getElementById('inp-buyer').value.trim();
   const emailDt=document.getElementById('inp-emailApproved').value;
   const prodDt=document.getElementById('inp-prodDate').value;
   const packDt=document.getElementById('inp-packingDate').value;
   const notes=document.getElementById('inp-notes').value.trim();
-  if(!name||!emailDt){alert('Nama project dan tanggal Email Approved wajib diisi.');return;}
-  const projRef=await addDoc(collection(db,'projects'),{name,buyer,emailApprovedDate:emailDt,prodDate:prodDt,packingDate:packDt,notes,createdBy:currentName,createdAt:Timestamp.now(),status:'active'});
+  if(!displayName||!emailDt){alert('Nama project dan tanggal Email Approved wajib diisi.');return;}
+  const name=displayName; // nama sebagai display utama
+  const projRef=await addDoc(collection(db,'projects'),{name,kode,buyer,emailApprovedDate:emailDt,prodDate:prodDt,packingDate:packDt,notes,createdBy:currentName,createdAt:Timestamp.now(),status:'active'});
   const dl=computeDeadlines(emailDt,packDt);
   for(const td of TASK_DEFINITIONS){
     await setDoc(doc(db,'projects',projRef.id,'tasks',td.id),{
@@ -930,9 +946,10 @@ window.createProject=async()=>{
     });
   }
   closeModal('modalNewProject');
-  projectsCache[projRef.id]={id:projRef.id,name,prodDate:prodDt};
+  projectsCache[projRef.id]={id:projRef.id,name,kode,prodDate:prodDt};
   ['projectSelect','projectSelectTasks'].forEach(id=>{
-    const o=document.createElement('option');o.value=projRef.id;o.textContent=name;
+    const o=document.createElement('option');o.value=projRef.id;
+    o.textContent=name+(kode?` (${kode})`:'');
     document.getElementById(id).appendChild(o);
   });
   document.getElementById('projectSelect').value=projRef.id;
@@ -943,7 +960,8 @@ window.createProject=async()=>{
 window.openEditProjectModal=()=>{
   if(!currentProjId)return;
   const p=projectsCache[currentProjId];if(!p)return;
-  document.getElementById('edit-projName').value=p.name||'';
+  document.getElementById('edit-projDisplayName').value=p.name||'';
+  document.getElementById('edit-projName').value=p.kode||'';
   document.getElementById('edit-buyer').value=p.buyer||'';
   document.getElementById('edit-emailApproved').value=p.emailApprovedDate||'';
   document.getElementById('edit-prodDate').value=p.prodDate||'';
@@ -953,16 +971,19 @@ window.openEditProjectModal=()=>{
 };
 window.saveEditProject=async()=>{
   if(!currentProjId)return;
-  const name=document.getElementById('edit-projName').value.trim();
+  const name=document.getElementById('edit-projDisplayName').value.trim();
+  const kode=document.getElementById('edit-projName').value.trim();
   const buyer=document.getElementById('edit-buyer').value.trim();
   const emailDt=document.getElementById('edit-emailApproved').value;
   const prodDt=document.getElementById('edit-prodDate').value;
   const packDt=document.getElementById('edit-packingDate').value;
   const notes=document.getElementById('edit-notes').value.trim();
   if(!name){alert('Nama project wajib diisi.');return;}
-  await updateDoc(doc(db,'projects',currentProjId),{name,buyer,emailApprovedDate:emailDt,prodDate:prodDt,packingDate:packDt,notes});
-  projectsCache[currentProjId]={...projectsCache[currentProjId],name,buyer,emailApprovedDate:emailDt,prodDate:prodDt,packingDate:packDt,notes};
-  document.querySelectorAll('#projectSelect option,#projectSelectTasks option').forEach(o=>{if(o.value===currentProjId)o.textContent=name;});
+  await updateDoc(doc(db,'projects',currentProjId),{name,kode,buyer,emailApprovedDate:emailDt,prodDate:prodDt,packingDate:packDt,notes});
+  projectsCache[currentProjId]={...projectsCache[currentProjId],name,kode,buyer,emailApprovedDate:emailDt,prodDate:prodDt,packingDate:packDt,notes};
+  document.querySelectorAll('#projectSelect option,#projectSelectTasks option').forEach(o=>{
+    if(o.value===currentProjId)o.textContent=name+(kode?` (${kode})`:'');
+  });
   if(emailDt){
     const newDl=computeDeadlines(emailDt,packDt);
     for(const[tid,deadline] of Object.entries(newDl)){
