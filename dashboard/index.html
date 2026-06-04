@@ -158,6 +158,19 @@ body::before {
 .notif-dot:hover{transform:scale(1.1);}
 .notif-dot.show{display:flex;}
 
+/* FAB */
+.fab {
+  position:fixed;bottom:32px;right:32px;z-index:100;
+  width:52px;height:52px;border-radius:50%;
+  background:linear-gradient(135deg,var(--accent),var(--cyan));
+  border:none;cursor:pointer;color:#000;font-size:26px;font-weight:700;
+  display:none;align-items:center;justify-content:center;
+  box-shadow:0 8px 32px rgba(57,255,20,0.35);
+  transition:all 0.2s;
+}
+.fab:hover{transform:scale(1.1);box-shadow:0 12px 40px rgba(57,255,20,0.5);}
+.fab.show{display:flex;}
+
 /* ── CONTENT ── */
 .content{padding:28px 32px 80px;}
 
@@ -526,7 +539,7 @@ body::before {
 </div>
 
 <!-- FAB -->
-<button class="notif-dot" id="fabNewProject" onclick="openNewProjectModal()">＋</button>
+<button class="fab" id="fabNewProject" onclick="openNewProjectModal()">＋</button>
 
 <!-- MODAL: Edit Project -->
 <div class="modal-overlay" id="modalEditProject">
