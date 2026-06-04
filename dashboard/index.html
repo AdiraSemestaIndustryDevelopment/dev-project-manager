@@ -42,9 +42,9 @@ body{
 body::before {
   content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
   background:
-    radial-gradient(ellipse 60% 50% at 15% 80%, rgba(57,255,20,0.07) 0%, transparent 65%),
-    radial-gradient(ellipse 40% 35% at 85% 20%, rgba(0,229,204,0.05) 0%, transparent 55%),
-    radial-gradient(ellipse 50% 40% at 50% 100%, rgba(57,255,20,0.04) 0%, transparent 60%);
+    radial-gradient(ellipse 70% 60% at 10% 90%, rgba(57,255,20,0.18) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 40% at 90% 10%, rgba(0,229,204,0.12) 0%, transparent 55%),
+    radial-gradient(ellipse 60% 50% at 50% 100%, rgba(57,255,20,0.10) 0%, transparent 60%);
 }
 
 /* SCROLLBAR */
@@ -92,19 +92,25 @@ body::before {
 .sidebar-user {
   margin-top:auto;padding-top:16px;
   border-top:1px solid var(--border);
-  display:flex;flex-direction:column;align-items:center;gap:8px;width:100%;
+  display:flex;flex-direction:column;align-items:center;gap:10px;width:100%;
 }
 .user-avatar {
   width:36px;height:36px;border-radius:50%;
   background:linear-gradient(135deg,var(--accent),var(--cyan));
-  display:grid;place-items:center;font-size:13px;font-weight:700;color:#000;flex-shrink:0;
+  display:grid;place-items:center;font-size:14px;font-weight:800;color:#000;
+  flex-shrink:0;cursor:default;
 }
 .user-meta{display:none;}
 .btn-logout-side{
-  background:transparent;border:none;color:var(--text3);
-  cursor:pointer;font-size:18px;padding:4px;transition:color 0.2s;
+  width:36px;height:36px;border-radius:10px;
+  background:rgba(255,68,68,0.08);
+  border:1px solid rgba(255,68,68,0.2);
+  color:var(--red);
+  cursor:pointer;font-size:16px;
+  display:grid;place-items:center;
+  transition:all 0.2s;
 }
-.btn-logout-side:hover{color:var(--red);}
+.btn-logout-side:hover{background:rgba(255,68,68,0.2);border-color:var(--red);}
 
 /* ── MAIN AREA ── */
 .main-area {
@@ -396,10 +402,14 @@ body::before {
   </div>
 
   <div class="sidebar-user">
-    <div class="user-avatar" id="userInitial">—</div>
-    <button class="btn-logout-side" id="btnLogout" title="Keluar">⇤</button>
+    <div class="user-avatar" id="userInitial" title="Profile">—</div>
+    <button class="btn-logout-side" id="btnLogout" title="Keluar">↩</button>
   </div>
 </aside>
+
+<!-- Hidden elements for JS compatibility -->
+<span id="userName" style="display:none"></span>
+<span id="userRole" style="display:none"></span>
 
 <!-- MAIN AREA -->
 <div class="main-area">
