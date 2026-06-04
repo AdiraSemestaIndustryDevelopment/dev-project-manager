@@ -34,10 +34,9 @@
 html{scroll-behavior:smooth;}
 body{
   background: var(--bg);
-  color:var(--text);font-family:'Inter',sans-serif;font-size:13px;min-height:100vh;display:flex;overflow:hidden;
-  position:relative;
+  color:var(--text);font-family:'Inter',sans-serif;font-size:13px;min-height:100vh;display:flex;
+  position:relative; overflow:hidden;
 }
-
 /* NEON GREEN BG GRADIENT */
 body::before {
   content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
@@ -45,6 +44,16 @@ body::before {
     radial-gradient(ellipse 70% 60% at 10% 90%, rgba(57,255,20,0.18) 0%, transparent 60%),
     radial-gradient(ellipse 50% 40% at 90% 10%, rgba(0,229,204,0.12) 0%, transparent 55%),
     radial-gradient(ellipse 60% 50% at 50% 100%, rgba(57,255,20,0.10) 0%, transparent 60%);
+}
+/* ── MAIN AREA ── */
+.main-area {
+  margin-left:var(--sidebar-w);
+  flex:1;
+  height:100vh;
+  overflow-y:scroll;
+  overflow-x:hidden;
+  background:transparent;
+  position:relative;z-index:1;
 }
 
 /* SCROLLBAR */
@@ -112,14 +121,7 @@ body::before {
 }
 .btn-logout-side:hover{background:rgba(255,68,68,0.2);border-color:var(--red);}
 
-/* ── MAIN AREA ── */
-.main-area {
-  margin-left:var(--sidebar-w);
-  flex:1;overflow-y:auto;
-  min-height:100vh;
-  background:transparent;
-  position:relative;z-index:1;
-}
+
 
 /* ── TOPBAR ── */
 .topbar {
