@@ -1741,9 +1741,8 @@ window.saveEditProject=async()=>{
       }
     }
     closeModal('modalEditProject');
-    // Refresh tampilan
-    if(currentProjId) renderDashboard();
-    else await renderAllProjects();
+    // Reload semua project dari Firestore agar sort & display terupdate
+    await loadProjects();
     alert('Project berhasil diupdate!');
   }catch(e){
     console.error('saveEditProject error:',e);
