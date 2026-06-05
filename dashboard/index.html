@@ -1149,14 +1149,18 @@ async function loadProjects(){
 
 // RENDER ALL PROJECTS OVERVIEW
 async function renderAllProjects(){
+  try {
   const today=new Date();today.setHours(0,0,0,0);
   const allProjects=Object.values(projectsCache);
+  const container=document.getElementById('allProjectsList');
+  const picTbody=document.getElementById('overallPicTableBody');
 
   if(!allProjects.length){
     document.getElementById('allProjectsSection').style.display='none';
     document.getElementById('emptyState').style.display='';
     return;
   }
+  document.getElementById('allProjectsSection').style.display='';
   document.getElementById('emptyState').style.display='none';
 
   // Apply buyer & factory filter
@@ -1166,10 +1170,7 @@ async function renderAllProjects(){
 
   let projects=allProjects;
   if(buyerFilter==='others'){
-    projects=projects.filter(p=>{
-      const b=(p.buyer||'').toLowerCase().trim();
-      return b && !knownBuyers.includes(b);
-    });
+    projects=projects.filter(p=>{ const b=(p.buyer||'').toLowerCase().trim(); return b && !knownBuyers.includes(b); });
   } else if(buyerFilter){
     projects=projects.filter(p=>(p.buyer||'').toLowerCase().trim()===buyerFilter);
   }
@@ -1177,60 +1178,61 @@ async function renderAllProjects(){
     projects=projects.filter(p=>(p.factory||'').toLowerCase().trim()===factoryFilter);
   }
 
-  // Show empty message if filter returns nothing
-  const container=document.getElementById('allProjectsList');
   if(!projects.length){
     container.innerHTML=`<div style="text-align:center;padding:40px;color:var(--text3);font-size:13px;">Tidak ada project untuk filter yang dipilih.</div>`;
-    document.getElementById('overallPicTableBody').innerHTML=`<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:20px">Tidak ada data.</td></tr>`;
+    if(picTbody) picTbody.innerHTML=`<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:20px">Tidak ada data.</td></tr>`;
     return;
   }
-  // Show loading state
-  document.getElementById('allProjectsList').innerHTML=`<div style="text-align:center;padding:24px;color:var(--text3);font-size:12px;">⏳ Memuat data...</div>`;
-  document.getElementById('overallPicTableBody').innerHTML=`<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:20px">Memuat...</td></tr>`;
 
-  // Load stats for filtered projects
+  container.innerHTML=`<div style="text-align:center;padding:24px;color:var(--text3);font-size:12px;">⏳ Memuat data...</div>`;
+  if(picTbody) picTbody.innerHTML=`<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:20px">Memuat...</td></tr>`;
+
   const projStats=[];
   for(const proj of projects){
-    const snap=await getDocs(collection(db,'projects',proj.id,'tasks'));
-    const tasks=snap.docs.map(d=>d.data());
-    const total=tasks.length;
-    const done=tasks.filter(t=>t.status==='done').length;
-    const overdue=tasks.filter(t=>t.status!=='done'&&t.deadline&&new Date(t.deadline)<today).length;
-    const warning=tasks.filter(t=>{
-      if(t.status==='done'||!t.deadline)return false;
-      const dl=new Date(t.deadline);dl.setHours(0,0,0,0);
-      const diff=Math.ceil((dl-today)/86400000);
-      return diff>=0&&diff<=7;
-    }).length;
-    const pct=total?Math.round(done/total*100):0;
-    // Urgency score: overdue x10 + warning x3 + prodDays
-    const prodDays=proj.prodDate?Math.ceil((new Date(proj.prodDate)-today)/86400000):999;
-    const urgency=overdue*10+warning*3+(prodDays<0?100:prodDays<7?50:prodDays<14?20:0);
-    projStats.push({proj,total,done,overdue,warning,pct,prodDays,urgency});
+    try {
+      const snap=await getDocs(collection(db,'projects',proj.id,'tasks'));
+      const tasks=snap.docs.map(d=>d.data());
+      const total=tasks.length;
+      const done=tasks.filter(t=>t.status==='done').length;
+      const overdue=tasks.filter(t=>{
+        if(t.status==='done'||!t.deadline)return false;
+        const[y,m,d2]=t.deadline.split('-').map(Number);
+        return new Date(y,m-1,d2)<today;
+      }).length;
+      const warning=tasks.filter(t=>{
+        if(t.status==='done'||!t.deadline)return false;
+        const[y,m,d2]=t.deadline.split('-').map(Number);
+        const dl=new Date(y,m-1,d2);
+        const diff=Math.ceil((dl-today)/86400000);
+        return diff>=0&&diff<=7;
+      }).length;
+      const pct=total?Math.round(done/total*100):0;
+      const prodDays=proj.prodDate?Math.ceil((new Date(proj.prodDate)-today)/86400000):999;
+      const urgency=overdue*10+warning*3+(prodDays<0?100:prodDays<7?50:prodDays<14?20:0);
+      projStats.push({proj,total,done,overdue,warning,pct,prodDays,urgency,tasks});
+    } catch(e){ console.warn('Error loading tasks for',proj.id,e); }
   }
 
-  // Sort by urgency (highest first), then by prodDate
   projStats.sort((a,b)=>b.urgency-a.urgency||(a.prodDays-b.prodDays));
 
-  const container=document.getElementById('allProjectsList');
   container.innerHTML=projStats.map(({proj,total,done,overdue,warning,pct,prodDays})=>{
     const cardClass=overdue>0?'urgent':warning>0?'warning-card':'ok';
     const barColor=overdue>0?'var(--red)':warning>0?'var(--orange)':pct===100?'var(--green)':'var(--accent)';
     const pctColor=overdue>0?'var(--red)':warning>0?'var(--orange)':pct===100?'var(--green)':'var(--accent)';
     const prodStr=proj.prodDate?new Date(proj.prodDate).toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'}):'—';
     const daysStr=proj.prodDate?(prodDays<0?`<span style="color:var(--red);font-weight:600">Lewat ${Math.abs(prodDays)} hari</span>`:prodDays===0?`<span style="color:var(--red);font-weight:600">HARI INI</span>`:`<span style="color:${prodDays<=7?'var(--orange)':'var(--text3)'}">H-${prodDays}</span>`):'—';
+    const factoryLabel=proj.factory?(proj.factory.charAt(0).toUpperCase()+proj.factory.slice(1)):'';
     return `<div class="proj-overview-card ${cardClass}" onclick="selectProject('${proj.id}')">
       <div class="proj-ov-top">
         <div style="flex:1">
           <div class="proj-ov-name">${proj.name}</div>
-          <div class="proj-ov-sub">${proj.kode?`${proj.kode} &nbsp;·&nbsp; `:''}${proj.buyer?proj.buyer:''}${proj.factory?` &nbsp;·&nbsp; 🏭 ${proj.factory.charAt(0).toUpperCase()+proj.factory.slice(1)}`:''}</div>
+          <div class="proj-ov-sub">${[proj.kode,proj.buyer,factoryLabel?'🏭 '+factoryLabel:''].filter(Boolean).join(' · ')}</div>
         </div>
         <div class="proj-ov-badges">
-          ${proj.factory?`<span class="proj-badge gray">🏭 ${proj.factory.charAt(0).toUpperCase()+proj.factory.slice(1)}</span>`:''}
+          ${factoryLabel?`<span class="proj-badge gray">🏭 ${factoryLabel}</span>`:''}
           ${overdue>0?`<span class="proj-badge red">⚠ ${overdue} Overdue</span>`:''}
           ${warning>0?`<span class="proj-badge orange">⏰ ${warning} Mepet</span>`:''}
-          ${pct===100?`<span class="proj-badge green">✓ Selesai</span>`:''}
-          ${overdue===0&&warning===0&&pct<100?`<span class="proj-badge green">✓ On Track</span>`:''}
+          ${pct===100?`<span class="proj-badge green">✓ Selesai</span>`:`${overdue===0&&warning===0?'<span class="proj-badge green">✓ On Track</span>':''}` }
         </div>
       </div>
       <div class="proj-ov-progress">
@@ -1239,54 +1241,50 @@ async function renderAllProjects(){
       </div>
       <div class="proj-ov-meta">
         <span>📋 ${done}/${total} task selesai</span>
-        <span>🏭 Produksi: ${prodStr} &nbsp;${daysStr}</span>
-        ${proj.emailApprovedDate?`<span>📧 Email Approved: ${new Date(proj.emailApprovedDate).toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'})}</span>`:''}
+        <span>🏭 Produksi: ${prodStr} ${daysStr}</span>
+        ${proj.emailApprovedDate?`<span>📧 ${new Date(proj.emailApprovedDate).toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'})}</span>`:''}
       </div>
     </div>`;
   }).join('');
 
-  // OVERALL KPI PER PIC (project yang difilter)
+  // KPI PER PIC dari filtered projects
   const picMap={};
-  // Gunakan data tasks yang sudah diload di projStats
-  for(const{proj,tasks:_} of projStats){
-    const snap=await getDocs(collection(db,'projects',proj.id,'tasks'));
-    snap.forEach(d=>{
-      const t=d.data();
+  for(const{tasks} of projStats){
+    tasks.forEach(t=>{
       (t.pics||[]).forEach(pic=>{
-        if(!picMap[pic])picMap[pic]={tasks:[],done:0,overdue:0,division:t.division};
-        picMap[pic].tasks.push(t);
+        if(!picMap[pic])picMap[pic]={total:0,done:0,overdue:0,division:t.division};
+        picMap[pic].total++;
         if(t.status==='done')picMap[pic].done++;
         else if(t.deadline){
-          const[y,m,dy]=t.deadline.split('-').map(Number);
-          const dl=new Date(y,m-1,dy);
-          if(dl<today)picMap[pic].overdue++;
+          const[y,m,d2]=t.deadline.split('-').map(Number);
+          if(new Date(y,m-1,d2)<today)picMap[pic].overdue++;
         }
       });
     });
   }
-  const tbody=document.getElementById('overallPicTableBody');
-  if(tbody){
+  if(picTbody){
     if(!Object.keys(picMap).length){
-      tbody.innerHTML=`<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:20px">Belum ada data task.</td></tr>`;
+      picTbody.innerHTML=`<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:20px">Belum ada data task.</td></tr>`;
     } else {
-    tbody.innerHTML=Object.entries(picMap)
-      .sort((a,b)=>b[1].overdue-a[1].overdue||(b[1].tasks.length-b[1].done)-(a[1].tasks.length-a[1].done))
-      .map(([name,data])=>{
-        const kpi=Math.round(data.done/data.tasks.length*100);
-        const bc=kpi===100?'var(--green)':data.overdue>0?'var(--red)':'var(--orange)';
-        const sc=kpi===100?'green':data.overdue>0?'red':'orange';
-        const sl=kpi===100?'✓ Selesai':data.overdue>0?'Ada Overdue':'On Track';
-        return `<tr>
-          <td><div class="pic-name-cell">${name}</div></td>
-          <td><div style="color:var(--text3);font-size:12px">${data.division}</div></td>
-          <td style="font-weight:600">${data.done}<span style="color:var(--text3);font-weight:400"> / ${data.tasks.length}</span></td>
-          <td><div class="bar-wrap"><div class="mini-bar"><div class="mini-fill" style="width:${kpi}%;background:${bc}"></div></div><span style="font-size:12px;color:${bc};font-weight:600">${kpi}%</span></div></td>
-          <td style="color:${data.overdue>0?'var(--red)':'var(--text3)'};font-weight:${data.overdue>0?'600':'400'}">${data.overdue}</td>
-          <td><span class="chip ${sc}">${sl}</span></td>
-        </tr>`;
-      }).join('');
+      picTbody.innerHTML=Object.entries(picMap)
+        .sort((a,b)=>b[1].overdue-a[1].overdue||(b[1].total-b[1].done)-(a[1].total-a[1].done))
+        .map(([name,d])=>{
+          const kpi=d.total?Math.round(d.done/d.total*100):0;
+          const bc=kpi===100?'var(--green)':d.overdue>0?'var(--red)':'var(--orange)';
+          const sc=kpi===100?'green':d.overdue>0?'red':'orange';
+          const sl=kpi===100?'✓ Selesai':d.overdue>0?'Ada Overdue':'On Track';
+          return `<tr>
+            <td><div class="pic-name-cell">${name}</div></td>
+            <td style="color:var(--text3);font-size:12px">${d.division}</td>
+            <td style="font-weight:600">${d.done}<span style="color:var(--text3);font-weight:400"> / ${d.total}</span></td>
+            <td><div class="bar-wrap"><div class="mini-bar"><div class="mini-fill" style="width:${kpi}%;background:${bc}"></div></div><span style="font-size:12px;color:${bc};font-weight:600">${kpi}%</span></div></td>
+            <td style="color:${d.overdue>0?'var(--red)':'var(--text3)'};font-weight:${d.overdue>0?'600':'400'}">${d.overdue}</td>
+            <td><span class="chip ${sc}">${sl}</span></td>
+          </tr>`;
+        }).join('');
     }
   }
+  } catch(err){ console.error('renderAllProjects error:',err); }
 }
 
 // SELECT PROJECT (from overview card click)
