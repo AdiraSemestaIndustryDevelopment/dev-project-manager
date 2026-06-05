@@ -555,9 +555,9 @@ body::before {
           <div class="kpi-emoji">⏰</div>
         </div>
         <div class="kpi-card">
-          <div class="kpi-tag">Sisa Hari Produksi</div>
+          <div class="kpi-tag">Total Project</div>
           <div class="kpi-num purple" id="kpi-proddays">—</div>
-          <div class="kpi-desc" id="kpi-proddate">Belum diset</div>
+          <div class="kpi-desc" id="kpi-proddate">Project aktif</div>
           <div class="kpi-emoji">🏭</div>
         </div>
       </div>
@@ -589,6 +589,19 @@ body::before {
           </div>
         </div>
         <div id="allProjectsList"></div>
+
+        <!-- KPI PER PIC OVERALL -->
+        <div style="margin-top:28px;">
+          <div class="section-head" style="margin-bottom:14px;">
+            <div class="section-title">KPI Per PIC — Semua Project</div>
+          </div>
+          <div class="table-wrap">
+            <table class="pic-table">
+              <thead><tr><th>PIC</th><th>Divisi</th><th>Selesai</th><th>KPI</th><th>Overdue</th><th>Status</th></tr></thead>
+              <tbody id="overallPicTableBody"></tbody>
+            </table>
+          </div>
+        </div>
       </div>
 
       <!-- SINGLE PROJECT VIEW (tampil saat project dipilih) -->
@@ -1247,6 +1260,48 @@ window.renderAllProjects = async function renderAllProjects(){
   // Sort murni berdasarkan prodDate terdekat dari hari ini
   projStats.sort((a,b)=>a.prodDays-b.prodDays);
 
+  // Hitung overall KPI dari semua project yang difilter
+  let totalTask=0,totalDone=0,totalOverdue=0,totalWarning=0;
+  const picMapOverall={};
+
+  for(const{proj,tasks,done,overdue,warning,total} of projStats){
+    totalTask+=total;
+    totalDone+=done;
+    totalOverdue+=overdue;
+    totalWarning+=warning;
+    // PIC map
+    tasks.forEach(t=>{
+      (t.pics||[]).forEach(pic=>{
+        if(!picMapOverall[pic])picMapOverall[pic]={total:0,done:0,overdue:0,division:t.division};
+        picMapOverall[pic].total++;
+        if(t.status==='done')picMapOverall[pic].done++;
+        else if(t.deadline){
+          const[y,m,d2]=t.deadline.split('-').map(Number);
+          if(new Date(y,m-1,d2)<today)picMapOverall[pic].overdue++;
+        }
+      });
+    });
+  }
+
+  // Update KPI cards
+  const kpiTotal=document.getElementById('kpi-total');
+  const kpiTotalDesc=document.getElementById('kpi-total-desc');
+  const kpiDone=document.getElementById('kpi-done');
+  const kpiDonePct=document.getElementById('kpi-done-pct');
+  const kpiOverdue=document.getElementById('kpi-overdue');
+  const kpiWarning=document.getElementById('kpi-warning');
+  if(kpiTotal){kpiTotal.textContent=totalTask-totalDone;kpiTotal.className='kpi-num '+(totalTask-totalDone===0?'green':totalTask-totalDone<=5?'orange':'purple');}
+  if(kpiTotalDesc)kpiTotalDesc.textContent=`dari ${totalTask} total task`;
+  if(kpiDone){kpiDone.textContent=totalDone;kpiDone.className='kpi-num green';}
+  if(kpiDonePct)kpiDonePct.textContent=totalTask?Math.round(totalDone/totalTask*100)+'% selesai':'—';
+  if(kpiOverdue){kpiOverdue.textContent=totalOverdue;kpiOverdue.className='kpi-num '+(totalOverdue>0?'red':'green');}
+  if(kpiWarning){kpiWarning.textContent=totalWarning;kpiWarning.className='kpi-num '+(totalWarning>0?'orange':'green');}
+  // Hapus proddays di lobby (tidak relevan untuk semua project)
+  const kpiProddays=document.getElementById('kpi-proddays');
+  const kpiProddate=document.getElementById('kpi-proddate');
+  if(kpiProddays)kpiProddays.textContent=projStats.length;
+  if(kpiProddate)kpiProddate.textContent=`Project aktif`;
+
   container.innerHTML=projStats.map(({proj,total,done,overdue,warning,pct,prodDays})=>{
     const cardClass=overdue>0?'urgent':warning>0?'warning-card':'ok';
     const barColor=overdue>0?'var(--red)':warning>0?'var(--orange)':pct===100?'var(--green)':'var(--accent)';
@@ -1307,6 +1362,30 @@ window.renderAllProjects = async function renderAllProjects(){
       picTbody.innerHTML=`<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:20px">Belum ada data task.</td></tr>`;
     } else {
       picTbody.innerHTML=Object.entries(picMap)
+        .sort((a,b)=>b[1].overdue-a[1].overdue||(b[1].total-b[1].done)-(a[1].total-a[1].done))
+        .map(([name,d])=>{
+          const kpi=d.total?Math.round(d.done/d.total*100):0;
+          const bc=kpi===100?'var(--green)':d.overdue>0?'var(--red)':'var(--orange)';
+          const sc=kpi===100?'green':d.overdue>0?'red':'orange';
+          const sl=kpi===100?'✓ Selesai':d.overdue>0?'Ada Overdue':'On Track';
+          return `<tr>
+            <td><div class="pic-name-cell">${name}</div></td>
+            <td style="color:var(--text3);font-size:12px">${d.division}</td>
+            <td style="font-weight:600">${d.done}<span style="color:var(--text3);font-weight:400"> / ${d.total}</span></td>
+            <td><div class="bar-wrap"><div class="mini-bar"><div class="mini-fill" style="width:${kpi}%;background:${bc}"></div></div><span style="font-size:12px;color:${bc};font-weight:600">${kpi}%</span></div></td>
+            <td style="color:${d.overdue>0?'var(--red)':'var(--text3)'};font-weight:${d.overdue>0?'600':'400'}">${d.overdue}</td>
+            <td><span class="chip ${sc}">${sl}</span></td>
+          </tr>`;
+        }).join('');
+    }
+  }
+  // Render KPI PIC overall
+  const overallPicTbody=document.getElementById('overallPicTableBody');
+  if(overallPicTbody){
+    if(!Object.keys(picMapOverall).length){
+      overallPicTbody.innerHTML=`<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:20px">Belum ada data.</td></tr>`;
+    } else {
+      overallPicTbody.innerHTML=Object.entries(picMapOverall)
         .sort((a,b)=>b[1].overdue-a[1].overdue||(b[1].total-b[1].done)-(a[1].total-a[1].done))
         .map(([name,d])=>{
           const kpi=d.total?Math.round(d.done/d.total*100):0;
@@ -1440,6 +1519,9 @@ function renderDashboard(){
     const diff=Math.ceil((pd-today)/86400000);
     document.getElementById('kpi-proddays').textContent=diff>0?diff:0;
     document.getElementById('kpi-proddate').textContent='Produksi: '+pd.toLocaleDateString('id-ID');
+    // Update label card
+    const tag=document.querySelector('#kpi-proddays')?.closest('.kpi-card')?.querySelector('.kpi-tag');
+    if(tag)tag.textContent='Sisa Hari Produksi';
   }
   document.getElementById('overallProgress').style.display='';
   document.getElementById('overallPct').textContent=pct+'%';
