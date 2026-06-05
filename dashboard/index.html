@@ -1279,6 +1279,8 @@ window.loadProject=async(projId)=>{
     document.getElementById('singleProjectView').style.display='none';
     editBtn.style.display='none';delBtn.style.display='none';
     document.getElementById('proj-subtitle').textContent='';
+    const nb=document.getElementById('proj-notes-bar');
+    if(nb) nb.textContent='';
     return;
   }
   document.getElementById('allProjectsSection').style.display='none';
@@ -1319,8 +1321,20 @@ function renderDashboard(){
   if(proj){
     const subtitle=document.getElementById('proj-subtitle');
     if(subtitle){
-      subtitle.textContent=proj.name+(proj.kode?` · ${proj.kode}`:'')+
-        (proj.buyer?` · ${proj.buyer}`:'');
+      const parts=[proj.name];
+      if(proj.kode) parts.push(proj.kode);
+      if(proj.buyer) parts.push(proj.buyer);
+      if(proj.factory) parts.push('🏭 '+proj.factory.charAt(0).toUpperCase()+proj.factory.slice(1));
+      subtitle.textContent=parts.join(' · ');
+      // Tampilkan catatan di bawahnya jika ada
+      let notesEl=document.getElementById('proj-notes-bar');
+      if(!notesEl){
+        notesEl=document.createElement('p');
+        notesEl.id='proj-notes-bar';
+        notesEl.style.cssText='font-size:11px;color:var(--orange);margin-top:2px;min-height:14px;font-style:italic;';
+        subtitle.parentNode.insertBefore(notesEl,subtitle.nextSibling);
+      }
+      notesEl.textContent=proj.notes?'📝 '+proj.notes:'';
     }
   }
   let done=0,overdue=0,warning=0;
