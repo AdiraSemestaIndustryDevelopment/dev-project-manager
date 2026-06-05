@@ -1720,25 +1720,35 @@ window.saveEditProject=async()=>{
   const buyerCustom=document.getElementById('edit-buyer-custom').value.trim();
   const buyer=(buyerSel==='others'?(buyerCustom||'others'):buyerSel).toLowerCase().trim();
   const factory=document.getElementById('edit-factory').value.toLowerCase().trim();
+  const emailDt=document.getElementById('edit-emailApproved').value;
   const prodDt=document.getElementById('edit-prodDate').value;
   const packDt=document.getElementById('edit-packingDate').value;
   const notes=document.getElementById('edit-notes').value.trim();
   if(!name){alert('Nama project wajib diisi.');return;}
-  await updateDoc(doc(db,'projects',currentProjId),{name,kode,buyer,factory,emailApprovedDate:emailDt,prodDate:prodDt,packingDate:packDt,notes});
-  projectsCache[currentProjId]={...projectsCache[currentProjId],name,kode,buyer,factory,emailApprovedDate:emailDt,prodDate:prodDt,packingDate:packDt,notes};
-  document.querySelectorAll('#projectSelect option,#projectSelectTasks option').forEach(o=>{
-    if(o.value===currentProjId)o.textContent=name+(kode?` (${kode})`:'');
-  });
-  if(emailDt){
-    const newDl=computeDeadlines(emailDt,packDt);
-    for(const[tid,deadline] of Object.entries(newDl)){
-      if(tasksCache[tid]&&tasksCache[tid].status!=='done'){
-        await updateDoc(doc(db,'projects',currentProjId,'tasks',tid),{deadline});
-        tasksCache[tid].deadline=deadline;
+  try{
+    await updateDoc(doc(db,'projects',currentProjId),{name,kode,buyer,factory,emailApprovedDate:emailDt,prodDate:prodDt,packingDate:packDt,notes});
+    projectsCache[currentProjId]={...projectsCache[currentProjId],name,kode,buyer,factory,emailApprovedDate:emailDt,prodDate:prodDt,packingDate:packDt,notes};
+    document.querySelectorAll('#projectSelect option,#projectSelectTasks option').forEach(o=>{
+      if(o.value===currentProjId)o.textContent=name+(kode?` (${kode})`:'');
+    });
+    if(emailDt){
+      const newDl=computeDeadlines(emailDt,packDt);
+      for(const[tid,deadline] of Object.entries(newDl)){
+        if(tasksCache[tid]&&tasksCache[tid].status!=='done'){
+          await updateDoc(doc(db,'projects',currentProjId,'tasks',tid),{deadline});
+          tasksCache[tid].deadline=deadline;
+        }
       }
     }
+    closeModal('modalEditProject');
+    // Refresh tampilan
+    if(currentProjId) renderDashboard();
+    else await renderAllProjects();
+    alert('Project berhasil diupdate!');
+  }catch(e){
+    console.error('saveEditProject error:',e);
+    alert('Gagal menyimpan: '+e.message);
   }
-  closeModal('modalEditProject');renderDashboard();alert('Project berhasil diupdate!');
 };
 
 // DELETE PROJECT
