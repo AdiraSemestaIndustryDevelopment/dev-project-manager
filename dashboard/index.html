@@ -1170,16 +1170,34 @@ async function renderAllProjects(){
 
   let projects=allProjects;
   if(buyerFilter==='others'){
-    projects=projects.filter(p=>{ const b=(p.buyer||'').toLowerCase().trim(); return b && !knownBuyers.includes(b); });
+    projects=projects.filter(p=>{
+      const b=(p.buyer||'').toLowerCase().trim();
+      return !b || !knownBuyers.includes(b);
+    });
   } else if(buyerFilter){
-    projects=projects.filter(p=>(p.buyer||'').toLowerCase().trim()===buyerFilter);
+    projects=projects.filter(p=>{
+      const b=(p.buyer||'').toLowerCase().trim();
+      return b===buyerFilter || b.includes(buyerFilter);
+    });
   }
   if(factoryFilter){
-    projects=projects.filter(p=>(p.factory||'').toLowerCase().trim()===factoryFilter);
+    projects=projects.filter(p=>{
+      const f=(p.factory||'').toLowerCase().trim();
+      return f===factoryFilter || f.includes(factoryFilter);
+    });
   }
 
-  if(!projects.length){
-    container.innerHTML=`<div style="text-align:center;padding:40px;color:var(--text3);font-size:13px;">Tidak ada project untuk filter yang dipilih.</div>`;
+  // Jika filter buyer/factory aktif tapi tidak ada hasil — project mungkin belum diupdate
+  if(!projects.length && (buyerFilter||factoryFilter)){
+    container.innerHTML=`
+      <div style="text-align:center;padding:40px;color:var(--text3);font-size:13px;">
+        <div style="font-size:24px;margin-bottom:12px">🔍</div>
+        <div style="font-weight:600;color:var(--text2);margin-bottom:8px">Tidak ada project ditemukan</div>
+        <div style="font-size:12px;line-height:1.8">
+          Project yang ada mungkin belum memiliki data buyer/factory.<br>
+          Buka setiap project → klik ✏️ Edit → isi buyer dan factory → simpan.
+        </div>
+      </div>`;
     if(picTbody) picTbody.innerHTML=`<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:20px">Tidak ada data.</td></tr>`;
     return;
   }
@@ -1222,11 +1240,13 @@ async function renderAllProjects(){
     const prodStr=proj.prodDate?new Date(proj.prodDate).toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'}):'—';
     const daysStr=proj.prodDate?(prodDays<0?`<span style="color:var(--red);font-weight:600">Lewat ${Math.abs(prodDays)} hari</span>`:prodDays===0?`<span style="color:var(--red);font-weight:600">HARI INI</span>`:`<span style="color:${prodDays<=7?'var(--orange)':'var(--text3)'}">H-${prodDays}</span>`):'—';
     const factoryLabel=proj.factory?(proj.factory.charAt(0).toUpperCase()+proj.factory.slice(1)):'';
+    const buyerLabel=proj.buyer||'';
+    const needsUpdate=!proj.buyer&&!proj.factory;
     return `<div class="proj-overview-card ${cardClass}" onclick="selectProject('${proj.id}')">
       <div class="proj-ov-top">
         <div style="flex:1">
           <div class="proj-ov-name">${proj.name}</div>
-          <div class="proj-ov-sub">${[proj.kode,proj.buyer,factoryLabel?'🏭 '+factoryLabel:''].filter(Boolean).join(' · ')}</div>
+          <div class="proj-ov-sub">${[proj.kode,buyerLabel,factoryLabel?'🏭 '+factoryLabel:''].filter(Boolean).join(' · ')}${needsUpdate?` <span style="color:var(--orange);font-size:10px">⚠ Belum ada buyer/factory</span>`:''}</div>
         </div>
         <div class="proj-ov-badges">
           ${factoryLabel?`<span class="proj-badge gray">🏭 ${factoryLabel}</span>`:''}
