@@ -1262,17 +1262,8 @@ window.renderAllProjects = async function renderAllProjects(){
     } catch(e){ console.warn('Error loading tasks for',proj.id,e); }
   }
 
-  // Sort: overdue dulu, lalu warning, lalu prodDate terdekat ke atas
-  projStats.sort((a,b)=>{
-    // Prioritas 1: ada overdue
-    if(b.overdue>0&&a.overdue===0) return 1;
-    if(a.overdue>0&&b.overdue===0) return -1;
-    // Prioritas 2: ada warning
-    if(b.warning>0&&a.warning===0) return 1;
-    if(a.warning>0&&b.warning===0) return -1;
-    // Prioritas 3: prodDate terdekat (ascending)
-    return a.prodDays-b.prodDays;
-  });
+  // Sort murni berdasarkan prodDate terdekat dari hari ini
+  projStats.sort((a,b)=>a.prodDays-b.prodDays);
 
   container.innerHTML=projStats.map(({proj,total,done,overdue,warning,pct,prodDays})=>{
     const cardClass=overdue>0?'urgent':warning>0?'warning-card':'ok';
