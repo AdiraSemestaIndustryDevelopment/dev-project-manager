@@ -1151,21 +1151,45 @@ async function loadProjects(){
 async function renderAllProjects(){
   const today=new Date();today.setHours(0,0,0,0);
   const allProjects=Object.values(projectsCache);
+
   if(!allProjects.length){
     document.getElementById('allProjectsSection').style.display='none';
     document.getElementById('emptyState').style.display='';
     return;
   }
+  document.getElementById('emptyState').style.display='none';
 
   // Apply buyer & factory filter
-  const buyerFilter=(document.getElementById('filterBuyer')?.value||'').toLowerCase();
-  const factoryFilter=(document.getElementById('filterFactory')?.value||'').toLowerCase();
+  const buyerFilter=(document.getElementById('filterBuyer')?.value||'').toLowerCase().trim();
+  const factoryFilter=(document.getElementById('filterFactory')?.value||'').toLowerCase().trim();
   const knownBuyers=['amd','bionic','callaway','first tactical','ghost','puma','rlf','taylormade','travis mathew','verb'];
 
   let projects=allProjects;
-  if(buyerFilter==='others') projects=projects.filter(p=>!knownBuyers.includes((p.buyer||'').toLowerCase()));
-  else if(buyerFilter) projects=projects.filter(p=>(p.buyer||'').toLowerCase()===buyerFilter);
-  if(factoryFilter) projects=projects.filter(p=>(p.factory||'').toLowerCase()===factoryFilter);
+  if(buyerFilter==='others'){
+    projects=projects.filter(p=>{
+      const b=(p.buyer||'').toLowerCase().trim();
+      return b && !knownBuyers.includes(b);
+    });
+  } else if(buyerFilter){
+    projects=projects.filter(p=>(p.buyer||'').toLowerCase().trim()===buyerFilter);
+  }
+  if(factoryFilter){
+    projects=projects.filter(p=>(p.factory||'').toLowerCase().trim()===factoryFilter);
+  }
+
+  // Show empty message if filter returns nothing
+  const container=document.getElementById('allProjectsList');
+  if(!projects.length){
+    container.innerHTML=`<div style="text-align:center;padding:40px;color:var(--text3);font-size:13px;">Tidak ada project untuk filter yang dipilih.</div>`;
+    document.getElementById('overallPicTableBody').innerHTML=`<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:20px">Tidak ada data.</td></tr>`;
+    return;
+  }
+  // Show loading state
+  document.getElementById('allProjectsList').innerHTML=`<div style="text-align:center;padding:24px;color:var(--text3);font-size:12px;">⏳ Memuat data...</div>`;
+  document.getElementById('overallPicTableBody').innerHTML=`<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:20px">Memuat...</td></tr>`;
+
+  // Load stats for filtered projects
+  const projStats=[];
   for(const proj of projects){
     const snap=await getDocs(collection(db,'projects',proj.id,'tasks'));
     const tasks=snap.docs.map(d=>d.data());
@@ -1221,9 +1245,10 @@ async function renderAllProjects(){
     </div>`;
   }).join('');
 
-  // OVERALL KPI PER PIC (semua project digabung)
+  // OVERALL KPI PER PIC (project yang difilter)
   const picMap={};
-  for(const{proj} of projStats){
+  // Gunakan data tasks yang sudah diload di projStats
+  for(const{proj,tasks:_} of projStats){
     const snap=await getDocs(collection(db,'projects',proj.id,'tasks'));
     snap.forEach(d=>{
       const t=d.data();
@@ -1231,12 +1256,19 @@ async function renderAllProjects(){
         if(!picMap[pic])picMap[pic]={tasks:[],done:0,overdue:0,division:t.division};
         picMap[pic].tasks.push(t);
         if(t.status==='done')picMap[pic].done++;
-        else if(t.deadline&&new Date(t.deadline)<today)picMap[pic].overdue++;
+        else if(t.deadline){
+          const[y,m,dy]=t.deadline.split('-').map(Number);
+          const dl=new Date(y,m-1,dy);
+          if(dl<today)picMap[pic].overdue++;
+        }
       });
     });
   }
   const tbody=document.getElementById('overallPicTableBody');
   if(tbody){
+    if(!Object.keys(picMap).length){
+      tbody.innerHTML=`<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:20px">Belum ada data task.</td></tr>`;
+    } else {
     tbody.innerHTML=Object.entries(picMap)
       .sort((a,b)=>b[1].overdue-a[1].overdue||(b[1].tasks.length-b[1].done)-(a[1].tasks.length-a[1].done))
       .map(([name,data])=>{
@@ -1253,6 +1285,7 @@ async function renderAllProjects(){
           <td><span class="chip ${sc}">${sl}</span></td>
         </tr>`;
       }).join('');
+    }
   }
 }
 
