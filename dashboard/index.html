@@ -1169,33 +1169,41 @@ async function renderAllProjects(){
   const knownBuyers=['amd','bionic','callaway','first tactical','ghost','puma','rlf','taylormade','travis mathew','verb'];
 
   let projects=allProjects;
+
   if(buyerFilter==='others'){
+    // Others = buyer yang tidak ada di list known, DAN harus punya field buyer
     projects=projects.filter(p=>{
       const b=(p.buyer||'').toLowerCase().trim();
-      return !b || !knownBuyers.includes(b);
+      return b && !knownBuyers.includes(b);
     });
   } else if(buyerFilter){
+    // Filter exact buyer — hanya tampilkan yang punya buyer tersebut
     projects=projects.filter(p=>{
       const b=(p.buyer||'').toLowerCase().trim();
-      return b===buyerFilter || b.includes(buyerFilter);
-    });
-  }
-  if(factoryFilter){
-    projects=projects.filter(p=>{
-      const f=(p.factory||'').toLowerCase().trim();
-      return f===factoryFilter || f.includes(factoryFilter);
+      return b===buyerFilter;
     });
   }
 
-  // Jika filter buyer/factory aktif tapi tidak ada hasil — project mungkin belum diupdate
-  if(!projects.length && (buyerFilter||factoryFilter)){
+  if(factoryFilter){
+    // Filter exact factory — hanya tampilkan yang punya factory tersebut
+    projects=projects.filter(p=>{
+      const f=(p.factory||'').toLowerCase().trim();
+      return f===factoryFilter;
+    });
+  }
+
+  if(!projects.length){
+    const isFiltered=buyerFilter||factoryFilter;
     container.innerHTML=`
-      <div style="text-align:center;padding:40px;color:var(--text3);font-size:13px;">
-        <div style="font-size:24px;margin-bottom:12px">🔍</div>
-        <div style="font-weight:600;color:var(--text2);margin-bottom:8px">Tidak ada project ditemukan</div>
-        <div style="font-size:12px;line-height:1.8">
-          Project yang ada mungkin belum memiliki data buyer/factory.<br>
-          Buka setiap project → klik ✏️ Edit → isi buyer dan factory → simpan.
+      <div style="text-align:center;padding:48px 32px;color:var(--text3);">
+        <div style="font-size:32px;margin-bottom:12px">${isFiltered?'🔍':'📂'}</div>
+        <div style="font-weight:700;color:var(--text2);font-size:15px;margin-bottom:8px">
+          ${isFiltered?'Tidak ada project ditemukan':'Belum ada project'}
+        </div>
+        <div style="font-size:12px;line-height:1.8;max-width:380px;margin:0 auto">
+          ${isFiltered?`Filter: <strong style="color:var(--accent)">${buyerFilter||'Semua Buyer'}</strong> · <strong style="color:var(--accent)">${factoryFilter||'Semua Factory'}</strong><br>
+          Project yang ada mungkin belum diisi data buyer/factory.<br>Buka project → klik ✏️ Edit → isi buyer & factory.`
+          :'Buat project baru dengan tombol + di kanan bawah.'}
         </div>
       </div>`;
     if(picTbody) picTbody.innerHTML=`<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:20px">Tidak ada data.</td></tr>`;
@@ -1241,12 +1249,18 @@ async function renderAllProjects(){
     const daysStr=proj.prodDate?(prodDays<0?`<span style="color:var(--red);font-weight:600">Lewat ${Math.abs(prodDays)} hari</span>`:prodDays===0?`<span style="color:var(--red);font-weight:600">HARI INI</span>`:`<span style="color:${prodDays<=7?'var(--orange)':'var(--text3)'}">H-${prodDays}</span>`):'—';
     const factoryLabel=proj.factory?(proj.factory.charAt(0).toUpperCase()+proj.factory.slice(1)):'';
     const buyerLabel=proj.buyer||'';
-    const needsUpdate=!proj.buyer&&!proj.factory;
+    const needsUpdate=!proj.buyer||!proj.factory;
     return `<div class="proj-overview-card ${cardClass}" onclick="selectProject('${proj.id}')">
       <div class="proj-ov-top">
         <div style="flex:1">
           <div class="proj-ov-name">${proj.name}</div>
-          <div class="proj-ov-sub">${[proj.kode,buyerLabel,factoryLabel?'🏭 '+factoryLabel:''].filter(Boolean).join(' · ')}${needsUpdate?` <span style="color:var(--orange);font-size:10px">⚠ Belum ada buyer/factory</span>`:''}</div>
+          <div class="proj-ov-sub" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+            <span>${[proj.kode,buyerLabel,factoryLabel?'🏭 '+factoryLabel:''].filter(Boolean).join(' · ')}</span>
+            ${needsUpdate?`<button onclick="event.stopPropagation();openQuickUpdate('${proj.id}','${proj.name}')" 
+              style="font-size:10px;padding:2px 8px;background:rgba(255,170,0,0.15);border:1px solid var(--orange);color:var(--orange);border-radius:4px;cursor:pointer;white-space:nowrap;">
+              ✏️ Isi Buyer/Factory
+            </button>`:''}
+          </div>
         </div>
         <div class="proj-ov-badges">
           ${factoryLabel?`<span class="proj-badge gray">🏭 ${factoryLabel}</span>`:''}
@@ -2028,8 +2042,82 @@ window.saveSettings=()=>{
 };
 
 window.openNewProjectModal=()=>document.getElementById('modalNewProject').classList.add('show');
+
+// QUICK UPDATE BUYER/FACTORY
+window.openQuickUpdate=(projId, projName)=>{
+  document.getElementById('quickUpdateProjId').value=projId;
+  document.getElementById('quickUpdateSub').textContent=`Project: ${projName}`;
+  const proj=projectsCache[projId];
+  if(proj){
+    const knownBuyers=['amd','bionic','callaway','first tactical','ghost','puma','rlf','taylormade','travis mathew','verb'];
+    const b=(proj.buyer||'').toLowerCase();
+    if(knownBuyers.includes(b)){
+      document.getElementById('quick-buyer').value=b;
+      document.getElementById('quick-buyer-custom').style.display='none';
+    } else if(proj.buyer){
+      document.getElementById('quick-buyer').value='others';
+      document.getElementById('quick-buyer-custom').value=proj.buyer;
+      document.getElementById('quick-buyer-custom').style.display='';
+    }
+    document.getElementById('quick-factory').value=proj.factory||'';
+  }
+  document.getElementById('modalQuickUpdate').classList.add('show');
+};
+
+window.saveQuickUpdate=async()=>{
+  const projId=document.getElementById('quickUpdateProjId').value;
+  const buyerSel=document.getElementById('quick-buyer').value;
+  const buyerCustom=document.getElementById('quick-buyer-custom').value.trim();
+  const buyer=buyerSel==='others'?(buyerCustom||'Others'):buyerSel;
+  const factory=document.getElementById('quick-factory').value;
+  if(!buyer||!factory){alert('Buyer dan Factory wajib diisi.');return;}
+  await updateDoc(doc(db,'projects',projId),{buyer,factory});
+  projectsCache[projId]={...projectsCache[projId],buyer,factory};
+  closeModal('modalQuickUpdate');
+  await renderAllProjects();
+};
 window.closeModal=(id)=>document.getElementById(id).classList.remove('show');
 document.querySelectorAll('.modal-overlay').forEach(el=>el.addEventListener('click',e=>{if(e.target===el)el.classList.remove('show');}));
 </script>
+<!-- MODAL: Quick Update Buyer/Factory -->
+<div class="modal-overlay" id="modalQuickUpdate">
+  <div class="modal" style="max-width:420px">
+    <button class="modal-close" onclick="closeModal('modalQuickUpdate')">✕</button>
+    <div class="modal-title" style="font-size:20px">Update Buyer & Factory</div>
+    <div class="modal-sub" id="quickUpdateSub">Isi data buyer dan factory untuk project ini</div>
+    <input type="hidden" id="quickUpdateProjId">
+    <div class="form-group">
+      <label class="form-label">Buyer / Klien</label>
+      <select class="form-select" id="quick-buyer" onchange="handleBuyerChange('quick')">
+        <option value="">— Pilih Buyer —</option>
+        <option value="amd" data-factory="kopo">AMD</option>
+        <option value="bionic" data-factory="kopo">Bionic</option>
+        <option value="callaway" data-factory="katapang">Callaway</option>
+        <option value="first tactical" data-factory="kopo">First Tactical</option>
+        <option value="ghost" data-factory="kopo">Ghost</option>
+        <option value="puma" data-factory="kopo">Puma</option>
+        <option value="rlf" data-factory="kopo">RLF</option>
+        <option value="taylormade" data-factory="kopo">TaylorMade</option>
+        <option value="travis mathew" data-factory="katapang">Travis Mathew</option>
+        <option value="verb" data-factory="kopo">Verb</option>
+        <option value="others">Others (isi sendiri)</option>
+      </select>
+      <input class="form-input" type="text" id="quick-buyer-custom" placeholder="Nama buyer lainnya..." style="display:none;margin-top:8px;">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Factory</label>
+      <select class="form-select" id="quick-factory">
+        <option value="">— Pilih Factory —</option>
+        <option value="katapang">Katapang</option>
+        <option value="kopo">Kopo</option>
+      </select>
+    </div>
+    <div class="form-actions">
+      <button class="btn-cancel" onclick="closeModal('modalQuickUpdate')">Batal</button>
+      <button class="btn-primary" onclick="saveQuickUpdate()">Simpan</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
