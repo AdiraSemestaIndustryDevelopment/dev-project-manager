@@ -528,6 +528,40 @@ body::before {
     <!-- ══ DASHBOARD ══ -->
     <section id="sec-dashboard">
 
+      <!-- KPI CARDS — selalu tampil di atas (lobby & single project) -->
+      <div class="kpi-grid" style="margin-bottom:24px;">
+        <div class="kpi-card">
+          <div class="kpi-tag">Sisa Task</div>
+          <div class="kpi-num purple" id="kpi-total">—</div>
+          <div class="kpi-desc" id="kpi-total-desc">Pilih project</div>
+          <div class="kpi-emoji">📋</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-tag">Selesai</div>
+          <div class="kpi-num green" id="kpi-done">—</div>
+          <div class="kpi-desc" id="kpi-done-pct">—</div>
+          <div class="kpi-emoji">✅</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-tag">Overdue</div>
+          <div class="kpi-num red" id="kpi-overdue">—</div>
+          <div class="kpi-desc">Melewati deadline</div>
+          <div class="kpi-emoji">⚠️</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-tag">Mendekati Deadline</div>
+          <div class="kpi-num orange" id="kpi-warning">—</div>
+          <div class="kpi-desc">Dalam 3 hari</div>
+          <div class="kpi-emoji">⏰</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-tag">Sisa Hari Produksi</div>
+          <div class="kpi-num purple" id="kpi-proddays">—</div>
+          <div class="kpi-desc" id="kpi-proddate">Belum diset</div>
+          <div class="kpi-emoji">🏭</div>
+        </div>
+      </div>
+
       <!-- ALL PROJECTS OVERVIEW (tampil saat belum pilih project) -->
       <div id="allProjectsSection">
         <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:16px;">
@@ -555,62 +589,10 @@ body::before {
           </div>
         </div>
         <div id="allProjectsList"></div>
-
-        <!-- OVERALL KPI PER PIC -->
-        <div style="margin-top:32px;">
-          <div class="section-head" style="margin-bottom:14px;">
-            <div class="section-title">KPI Per PIC — Semua Project</div>
-          </div>
-          <div class="table-wrap">
-            <table class="pic-table">
-              <thead>
-                <tr>
-                  <th>PIC</th><th>Divisi</th><th>Selesai</th>
-                  <th>KPI</th><th>Overdue</th><th>Status</th>
-                </tr>
-              </thead>
-              <tbody id="overallPicTableBody"></tbody>
-            </table>
-          </div>
-        </div>
       </div>
 
       <!-- SINGLE PROJECT VIEW (tampil saat project dipilih) -->
       <div id="singleProjectView" style="display:none">
-        <!-- KPI -->
-        <div class="kpi-grid">
-          <div class="kpi-card">
-            <div class="kpi-tag">Sisa Task</div>
-            <div class="kpi-num purple" id="kpi-total">37</div>
-            <div class="kpi-desc" id="kpi-total-desc">Belum diselesaikan</div>
-            <div class="kpi-emoji">📋</div>
-          </div>
-          <div class="kpi-card">
-            <div class="kpi-tag">Selesai</div>
-            <div class="kpi-num green" id="kpi-done">—</div>
-            <div class="kpi-desc" id="kpi-done-pct">—</div>
-            <div class="kpi-emoji">✅</div>
-          </div>
-          <div class="kpi-card">
-            <div class="kpi-tag">Overdue</div>
-            <div class="kpi-num red" id="kpi-overdue">—</div>
-            <div class="kpi-desc">Melewati deadline</div>
-            <div class="kpi-emoji">⚠️</div>
-          </div>
-          <div class="kpi-card">
-            <div class="kpi-tag">Mendekati Deadline</div>
-            <div class="kpi-num orange" id="kpi-warning">—</div>
-            <div class="kpi-desc">Dalam 3 hari</div>
-            <div class="kpi-emoji">⏰</div>
-          </div>
-          <div class="kpi-card">
-            <div class="kpi-tag">Sisa Hari Produksi</div>
-            <div class="kpi-num purple" id="kpi-proddays">—</div>
-            <div class="kpi-desc" id="kpi-proddate">Belum diset</div>
-            <div class="kpi-emoji">🏭</div>
-          </div>
-        </div>
-
         <!-- PROGRESS -->
         <div class="progress-section" id="overallProgress">
           <div class="section-head">
@@ -1370,6 +1352,13 @@ window.loadProject=async(projId)=>{
     document.getElementById('proj-subtitle').textContent='';
     const nb=document.getElementById('proj-notes-bar');
     if(nb) nb.textContent='';
+    // Reset KPI cards
+    ['kpi-total','kpi-done','kpi-overdue','kpi-warning','kpi-proddays'].forEach(id=>{
+      const el=document.getElementById(id);if(el)el.textContent='—';
+    });
+    const tdesc=document.getElementById('kpi-total-desc');if(tdesc)tdesc.textContent='Pilih project';
+    const dpct=document.getElementById('kpi-done-pct');if(dpct)dpct.textContent='—';
+    const pdate=document.getElementById('kpi-proddate');if(pdate)pdate.textContent='Belum diset';
     return;
   }
   document.getElementById('allProjectsSection').style.display='none';
