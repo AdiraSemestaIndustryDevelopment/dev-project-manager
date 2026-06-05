@@ -1249,13 +1249,30 @@ window.renderAllProjects = async function renderAllProjects(){
         return diff>=0&&diff<=7;
       }).length;
       const pct=total?Math.round(done/total*100):0;
-      const prodDays=proj.prodDate?Math.ceil((new Date(proj.prodDate)-today)/86400000):999;
-      const urgency=overdue*10+warning*3+(prodDays<0?100:prodDays<7?50:prodDays<14?20:0);
+      // Parse prodDate dengan benar (hindari timezone issue)
+      let prodDays=999;
+      if(proj.prodDate){
+        const[py,pm,pd]=proj.prodDate.split('-').map(Number);
+        const prodDate=new Date(py,pm-1,pd);prodDate.setHours(0,0,0,0);
+        prodDays=Math.ceil((prodDate-today)/86400000);
+      }
+      // Urgency score: overdue paling urgent, lalu prodDate terdekat
+      const urgency=(overdue>0?10000:0)+(warning>0?1000:0)+Math.max(0,1000-Math.max(prodDays,0));
       projStats.push({proj,total,done,overdue,warning,pct,prodDays,urgency,tasks});
     } catch(e){ console.warn('Error loading tasks for',proj.id,e); }
   }
 
-  projStats.sort((a,b)=>b.urgency-a.urgency||(a.prodDays-b.prodDays));
+  // Sort: overdue dulu, lalu warning, lalu prodDate terdekat ke atas
+  projStats.sort((a,b)=>{
+    // Prioritas 1: ada overdue
+    if(b.overdue>0&&a.overdue===0) return 1;
+    if(a.overdue>0&&b.overdue===0) return -1;
+    // Prioritas 2: ada warning
+    if(b.warning>0&&a.warning===0) return 1;
+    if(a.warning>0&&b.warning===0) return -1;
+    // Prioritas 3: prodDate terdekat (ascending)
+    return a.prodDays-b.prodDays;
+  });
 
   container.innerHTML=projStats.map(({proj,total,done,overdue,warning,pct,prodDays})=>{
     const cardClass=overdue>0?'urgent':warning>0?'warning-card':'ok';
