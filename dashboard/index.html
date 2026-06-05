@@ -1136,14 +1136,42 @@ function scheduleNotif(){
 
 // LOAD PROJECTS
 async function loadProjects(){
-  const snap=await getDocs(collection(db,'projects'));
+  // Clear cache dan reload fresh dari Firestore
+  projectsCache={};
   const sels=[document.getElementById('projectSelect'),document.getElementById('projectSelectTasks')];
+  sels.forEach(sel=>{ while(sel.options.length>1) sel.remove(1); });
+
+  const snap=await getDocs(collection(db,'projects'));
+
+  // Batch normalize buyer/factory ke lowercase di Firestore
+  const updatePromises=[];
   snap.forEach(d=>{
-    projectsCache[d.id]={id:d.id,...d.data()};
     const data=d.data();
+    const buyerRaw=data.buyer||'';
+    const factoryRaw=data.factory||'';
+    const buyerNorm=buyerRaw.toLowerCase().trim();
+    const factoryNorm=factoryRaw.toLowerCase().trim();
+    // Update ke Firestore hanya jika berbeda
+    if(buyerRaw!==buyerNorm||factoryRaw!==factoryNorm){
+      updatePromises.push(updateDoc(doc(db,'projects',d.id),{buyer:buyerNorm,factory:factoryNorm}));
+    }
+    const normalized={...data,buyer:buyerNorm,factory:factoryNorm};
+    projectsCache[d.id]={id:d.id,...normalized};
     const label=data.name+(data.kode?` (${data.kode})`:'');
-    sels.forEach(sel=>{const o=document.createElement('option');o.value=d.id;o.textContent=label;sel.appendChild(o);});
+    sels.forEach(sel=>{
+      const o=document.createElement('option');
+      o.value=d.id;o.textContent=label;
+      sel.appendChild(o);
+    });
   });
+
+  // Jalankan semua update normalisasi
+  if(updatePromises.length>0){
+    await Promise.all(updatePromises);
+    console.log(`Normalized ${updatePromises.length} projects in Firestore`);
+  }
+
+  console.log('Projects loaded:',Object.values(projectsCache).map(p=>({name:p.name,buyer:p.buyer,factory:p.factory})));
   await renderAllProjects();
 }
 
@@ -1163,35 +1191,23 @@ async function renderAllProjects(){
   document.getElementById('allProjectsSection').style.display='';
   document.getElementById('emptyState').style.display='none';
 
-  // Apply buyer & factory filter
+  // ── FILTER BUYER & FACTORY ──────────────────────────────────
   const buyerFilter=(document.getElementById('filterBuyer')?.value||'').toLowerCase().trim();
   const factoryFilter=(document.getElementById('filterFactory')?.value||'').toLowerCase().trim();
   const knownBuyers=['amd','bionic','callaway','first tactical','ghost','puma','rlf','taylormade','travis mathew','verb'];
 
-  let projects=allProjects;
-
-  if(buyerFilter==='others'){
-    // Others = buyer yang tidak ada di list known, DAN harus punya field buyer
-    projects=projects.filter(p=>{
-      const b=(p.buyer||'').toLowerCase().trim();
-      return b && !knownBuyers.includes(b);
-    });
-  } else if(buyerFilter){
-    // Filter exact buyer — hanya tampilkan yang punya buyer tersebut
-    projects=projects.filter(p=>{
-      const b=(p.buyer||'').toLowerCase().trim();
-      return b===buyerFilter;
-    });
-  }
-
-  if(factoryFilter){
-    // Filter exact factory — hanya tampilkan yang punya factory tersebut
-    projects=projects.filter(p=>{
-      const f=(p.factory||'').toLowerCase().trim();
-      return f===factoryFilter;
-    });
-  }
-
+  let projects=allProjects.filter(p=>{
+    const pB=(p.buyer||'').toLowerCase().trim();
+    const pF=(p.factory||'').toLowerCase().trim();
+    // Buyer filter
+    let bOk=true;
+    if(buyerFilter==='others') bOk=pB!==''&&!knownBuyers.includes(pB);
+    else if(buyerFilter) bOk=pB===buyerFilter;
+    // Factory filter
+    let fOk=true;
+    if(factoryFilter) fOk=pF===factoryFilter;
+    return bOk&&fOk;
+  });
   if(!projects.length){
     const isFiltered=buyerFilter||factoryFilter;
     container.innerHTML=`
@@ -1248,7 +1264,7 @@ async function renderAllProjects(){
     const prodStr=proj.prodDate?new Date(proj.prodDate).toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'}):'—';
     const daysStr=proj.prodDate?(prodDays<0?`<span style="color:var(--red);font-weight:600">Lewat ${Math.abs(prodDays)} hari</span>`:prodDays===0?`<span style="color:var(--red);font-weight:600">HARI INI</span>`:`<span style="color:${prodDays<=7?'var(--orange)':'var(--text3)'}">H-${prodDays}</span>`):'—';
     const factoryLabel=proj.factory?(proj.factory.charAt(0).toUpperCase()+proj.factory.slice(1)):'';
-    const buyerLabel=proj.buyer||'';
+    const buyerLabel=proj.buyer?(proj.buyer.charAt(0).toUpperCase()+proj.buyer.slice(1)):'';
     const needsUpdate=!proj.buyer||!proj.factory;
     return `<div class="proj-overview-card ${cardClass}" onclick="selectProject('${proj.id}')">
       <div class="proj-ov-top">
@@ -1622,8 +1638,8 @@ window.createProject=async()=>{
   const kode=document.getElementById('inp-projName').value.trim();
   const buyerSel=document.getElementById('inp-buyer').value;
   const buyerCustom=document.getElementById('inp-buyer-custom').value.trim();
-  const buyer=buyerSel==='others'?(buyerCustom||'Others'):buyerSel;
-  const factory=document.getElementById('inp-factory').value;
+  const buyer=(buyerSel==='others'?(buyerCustom||'others'):buyerSel).toLowerCase().trim();
+  const factory=(document.getElementById('inp-factory').value).toLowerCase().trim();
   const emailDt=document.getElementById('inp-emailApproved').value;
   const prodDt=document.getElementById('inp-prodDate').value;
   const packDt=document.getElementById('inp-packingDate').value;
@@ -1640,14 +1656,27 @@ window.createProject=async()=>{
     });
   }
   closeModal('modalNewProject');
-  projectsCache[projRef.id]={id:projRef.id,name,kode,buyer,factory,prodDate:prodDt};
-  const label=name+(kode?` (${kode})`:'')+( buyer?` · ${buyer}`:'')+( factory?` · ${factory}`:'');
+  // Reset form
+  document.getElementById('inp-projDisplayName').value='';
+  document.getElementById('inp-projName').value='';
+  document.getElementById('inp-buyer').value='';
+  document.getElementById('inp-buyer-custom').value='';
+  document.getElementById('inp-buyer-custom').style.display='none';
+  document.getElementById('inp-factory').value='';
+  document.getElementById('inp-emailApproved').value='';
+  document.getElementById('inp-prodDate').value='';
+  document.getElementById('inp-packingDate').value='';
+  document.getElementById('inp-notes').value='';
+  // Add to cache
+  projectsCache[projRef.id]={id:projRef.id,name,kode,buyer,factory,prodDate:prodDt,emailApprovedDate:emailDt,packingDate:packDt,buyer,notes};
+  // Add to dropdowns
   ['projectSelect','projectSelectTasks'].forEach(id=>{
-    const o=document.createElement('option');o.value=projRef.id;o.textContent=name+(kode?` (${kode})`:'');
+    const o=document.createElement('option');o.value=projRef.id;
+    o.textContent=name+(kode?` (${kode})`:'');
     document.getElementById(id).appendChild(o);
   });
-  document.getElementById('projectSelect').value=projRef.id;
-  loadProject(projRef.id);
+  // Refresh lobby
+  await renderAllProjects();
 };
 
 // EDIT PROJECT
@@ -1681,9 +1710,8 @@ window.saveEditProject=async()=>{
   const kode=document.getElementById('edit-projName').value.trim();
   const buyerSel=document.getElementById('edit-buyer').value;
   const buyerCustom=document.getElementById('edit-buyer-custom').value.trim();
-  const buyer=buyerSel==='others'?(buyerCustom||'Others'):buyerSel;
-  const factory=document.getElementById('edit-factory').value;
-  const emailDt=document.getElementById('edit-emailApproved').value;
+  const buyer=(buyerSel==='others'?(buyerCustom||'others'):buyerSel).toLowerCase().trim();
+  const factory=document.getElementById('edit-factory').value.toLowerCase().trim();
   const prodDt=document.getElementById('edit-prodDate').value;
   const packDt=document.getElementById('edit-packingDate').value;
   const notes=document.getElementById('edit-notes').value.trim();
@@ -2068,8 +2096,8 @@ window.saveQuickUpdate=async()=>{
   const projId=document.getElementById('quickUpdateProjId').value;
   const buyerSel=document.getElementById('quick-buyer').value;
   const buyerCustom=document.getElementById('quick-buyer-custom').value.trim();
-  const buyer=buyerSel==='others'?(buyerCustom||'Others'):buyerSel;
-  const factory=document.getElementById('quick-factory').value;
+  const buyer=(buyerSel==='others'?(buyerCustom||'others'):buyerSel).toLowerCase().trim();
+  const factory=document.getElementById('quick-factory').value.toLowerCase().trim();
   if(!buyer||!factory){alert('Buyer dan Factory wajib diisi.');return;}
   await updateDoc(doc(db,'projects',projId),{buyer,factory});
   projectsCache[projId]={...projectsCache[projId],buyer,factory};
