@@ -530,8 +530,29 @@ body::before {
 
       <!-- ALL PROJECTS OVERVIEW (tampil saat belum pilih project) -->
       <div id="allProjectsSection">
-        <div class="section-head" style="margin-bottom:16px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:16px;">
           <div class="section-title">Semua Project — Urutan Urgency</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <select class="form-select" id="filterBuyer" onchange="renderAllProjects()" style="padding:7px 12px;font-size:12px;min-width:150px;">
+              <option value="">Semua Buyer</option>
+              <option value="amd">AMD</option>
+              <option value="bionic">Bionic</option>
+              <option value="callaway">Callaway</option>
+              <option value="first tactical">First Tactical</option>
+              <option value="ghost">Ghost</option>
+              <option value="puma">Puma</option>
+              <option value="rlf">RLF</option>
+              <option value="taylormade">TaylorMade</option>
+              <option value="travis mathew">Travis Mathew</option>
+              <option value="verb">Verb</option>
+              <option value="others">Others</option>
+            </select>
+            <select class="form-select" id="filterFactory" onchange="renderAllProjects()" style="padding:7px 12px;font-size:12px;min-width:130px;">
+              <option value="">Semua Factory</option>
+              <option value="katapang">Katapang</option>
+              <option value="kopo">Kopo</option>
+            </select>
+          </div>
         </div>
         <div id="allProjectsList"></div>
 
@@ -559,9 +580,9 @@ body::before {
         <!-- KPI -->
         <div class="kpi-grid">
           <div class="kpi-card">
-            <div class="kpi-tag">Total Task</div>
+            <div class="kpi-tag">Sisa Task</div>
             <div class="kpi-num purple" id="kpi-total">37</div>
-            <div class="kpi-desc">Dalam project ini</div>
+            <div class="kpi-desc" id="kpi-total-desc">Belum diselesaikan</div>
             <div class="kpi-emoji">📋</div>
           </div>
           <div class="kpi-card">
@@ -817,9 +838,37 @@ body::before {
     <button class="modal-close" onclick="closeModal('modalEditProject')">✕</button>
     <div class="modal-title">Edit Project</div>
     <div class="modal-sub">Ubah data project yang sudah ada</div>
-    <div class="form-group"><label class="form-label">Nama Project</label><input class="form-input" type="text" id="edit-projDisplayName" placeholder="e.g. Glove Order Nike Q3 2024"></div>
+    <div class="form-group"><label class="form-label">Nama Project</label><input class="form-input" type="text" id="edit-projDisplayName"></div>
     <div class="form-group"><label class="form-label">Kode Project</label><input class="form-input" type="text" id="edit-projName"></div>
-    <div class="form-group"><label class="form-label">Buyer / Klien</label><input class="form-input" type="text" id="edit-buyer"></div>
+
+    <div class="form-group">
+      <label class="form-label">Buyer / Klien</label>
+      <select class="form-select" id="edit-buyer" onchange="handleBuyerChange('edit')">
+        <option value="">— Pilih Buyer —</option>
+        <option value="amd" data-factory="kopo">AMD</option>
+        <option value="bionic" data-factory="kopo">Bionic</option>
+        <option value="callaway" data-factory="katapang">Callaway</option>
+        <option value="first tactical" data-factory="kopo">First Tactical</option>
+        <option value="ghost" data-factory="kopo">Ghost</option>
+        <option value="puma" data-factory="kopo">Puma</option>
+        <option value="rlf" data-factory="kopo">RLF</option>
+        <option value="taylormade" data-factory="kopo">TaylorMade</option>
+        <option value="travis mathew" data-factory="katapang">Travis Mathew</option>
+        <option value="verb" data-factory="kopo">Verb</option>
+        <option value="others">Others (isi sendiri)</option>
+      </select>
+      <input class="form-input" type="text" id="edit-buyer-custom" placeholder="Nama buyer lainnya..." style="display:none;margin-top:8px;">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Factory</label>
+      <select class="form-select" id="edit-factory">
+        <option value="">— Pilih Factory —</option>
+        <option value="katapang">Katapang</option>
+        <option value="kopo">Kopo</option>
+      </select>
+    </div>
+
     <div class="form-group"><label class="form-label">Tanggal Email Approved</label><input class="form-input" type="date" id="edit-emailApproved"></div>
     <div class="form-group"><label class="form-label">Tanggal Mulai Produksi</label><input class="form-input" type="date" id="edit-prodDate"></div>
     <div class="form-group"><label class="form-label">Tanggal Email Packing Spec</label><input class="form-input" type="date" id="edit-packingDate"></div>
@@ -839,7 +888,35 @@ body::before {
     <div class="modal-sub">Generate 37 task otomatis dari tanggal Email Approved</div>
     <div class="form-group"><label class="form-label">Nama Project</label><input class="form-input" type="text" id="inp-projDisplayName" placeholder="e.g. Glove Order Nike Q3 2024"></div>
     <div class="form-group"><label class="form-label">Kode Project</label><input class="form-input" type="text" id="inp-projName" placeholder="e.g. ORDER-2024-GLV-001"></div>
-    <div class="form-group"><label class="form-label">Buyer / Klien</label><input class="form-input" type="text" id="inp-buyer" placeholder="e.g. PT. XYZ International"></div>
+
+    <div class="form-group">
+      <label class="form-label">Buyer / Klien</label>
+      <select class="form-select" id="inp-buyer" onchange="handleBuyerChange('inp')">
+        <option value="">— Pilih Buyer —</option>
+        <option value="amd" data-factory="kopo">AMD</option>
+        <option value="bionic" data-factory="kopo">Bionic</option>
+        <option value="callaway" data-factory="katapang">Callaway</option>
+        <option value="first tactical" data-factory="kopo">First Tactical</option>
+        <option value="ghost" data-factory="kopo">Ghost</option>
+        <option value="puma" data-factory="kopo">Puma</option>
+        <option value="rlf" data-factory="kopo">RLF</option>
+        <option value="taylormade" data-factory="kopo">TaylorMade</option>
+        <option value="travis mathew" data-factory="katapang">Travis Mathew</option>
+        <option value="verb" data-factory="kopo">Verb</option>
+        <option value="others">Others (isi sendiri)</option>
+      </select>
+      <input class="form-input" type="text" id="inp-buyer-custom" placeholder="Nama buyer lainnya..." style="display:none;margin-top:8px;">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Factory</label>
+      <select class="form-select" id="inp-factory">
+        <option value="">— Pilih Factory —</option>
+        <option value="katapang">Katapang</option>
+        <option value="kopo">Kopo</option>
+      </select>
+    </div>
+
     <div class="form-group"><label class="form-label">Tanggal Email Approved (H+0)</label><input class="form-input" type="date" id="inp-emailApproved"></div>
     <div class="form-group"><label class="form-label">Tanggal Mulai Produksi</label><input class="form-input" type="date" id="inp-prodDate"></div>
     <div class="form-group"><label class="form-label">Tanggal Email Permintaan Packing Spec</label><input class="form-input" type="date" id="inp-packingDate"></div>
@@ -1073,15 +1150,22 @@ async function loadProjects(){
 // RENDER ALL PROJECTS OVERVIEW
 async function renderAllProjects(){
   const today=new Date();today.setHours(0,0,0,0);
-  const projects=Object.values(projectsCache);
-  if(!projects.length){
+  const allProjects=Object.values(projectsCache);
+  if(!allProjects.length){
     document.getElementById('allProjectsSection').style.display='none';
     document.getElementById('emptyState').style.display='';
     return;
   }
 
-  // Load tasks for each project to get stats
-  const projStats=[];
+  // Apply buyer & factory filter
+  const buyerFilter=(document.getElementById('filterBuyer')?.value||'').toLowerCase();
+  const factoryFilter=(document.getElementById('filterFactory')?.value||'').toLowerCase();
+  const knownBuyers=['amd','bionic','callaway','first tactical','ghost','puma','rlf','taylormade','travis mathew','verb'];
+
+  let projects=allProjects;
+  if(buyerFilter==='others') projects=projects.filter(p=>!knownBuyers.includes((p.buyer||'').toLowerCase()));
+  else if(buyerFilter) projects=projects.filter(p=>(p.buyer||'').toLowerCase()===buyerFilter);
+  if(factoryFilter) projects=projects.filter(p=>(p.factory||'').toLowerCase()===factoryFilter);
   for(const proj of projects){
     const snap=await getDocs(collection(db,'projects',proj.id,'tasks'));
     const tasks=snap.docs.map(d=>d.data());
@@ -1115,9 +1199,10 @@ async function renderAllProjects(){
       <div class="proj-ov-top">
         <div style="flex:1">
           <div class="proj-ov-name">${proj.name}</div>
-          <div class="proj-ov-sub">${proj.kode?`Kode: ${proj.kode} &nbsp;·&nbsp; `:''}${proj.buyer?proj.buyer:''}</div>
+          <div class="proj-ov-sub">${proj.kode?`${proj.kode} &nbsp;·&nbsp; `:''}${proj.buyer?proj.buyer:''}${proj.factory?` &nbsp;·&nbsp; 🏭 ${proj.factory.charAt(0).toUpperCase()+proj.factory.slice(1)}`:''}</div>
         </div>
         <div class="proj-ov-badges">
+          ${proj.factory?`<span class="proj-badge gray">🏭 ${proj.factory.charAt(0).toUpperCase()+proj.factory.slice(1)}</span>`:''}
           ${overdue>0?`<span class="proj-badge red">⚠ ${overdue} Overdue</span>`:''}
           ${warning>0?`<span class="proj-badge orange">⏰ ${warning} Mepet</span>`:''}
           ${pct===100?`<span class="proj-badge green">✓ Selesai</span>`:''}
@@ -1247,7 +1332,13 @@ function renderDashboard(){
     const diff=Math.ceil((dl-today)/86400000);
     if(diff<0)overdue++;else if(diff<=3)warning++;
   });
+  const remaining=tasks.length-done;
   const pct=tasks.length?Math.round(done/tasks.length*100):0;
+  // Total task = sisa yang belum selesai
+  document.getElementById('kpi-total').textContent=remaining;
+  document.getElementById('kpi-total').className='kpi-num '+(remaining===0?'green':remaining<=5?'orange':'purple');
+  const totalDesc=document.getElementById('kpi-total-desc');
+  if(totalDesc) totalDesc.textContent=remaining===0?'✓ DONE':`dari ${tasks.length} total task`;
   document.getElementById('kpi-done').textContent=done;
   document.getElementById('kpi-done-pct').textContent=pct+'% selesai';
   document.getElementById('kpi-overdue').textContent=overdue;
@@ -1432,18 +1523,35 @@ window.openTaskDetail=(taskId)=>{
   document.getElementById('modalTaskDetail').classList.add('show');
 };
 
+// BUYER CHANGE HANDLER — auto-set factory & show custom input
+window.handleBuyerChange=(prefix)=>{
+  const sel=document.getElementById(prefix+'-buyer');
+  const custom=document.getElementById(prefix+'-buyer-custom');
+  const factory=document.getElementById(prefix+'-factory');
+  const val=sel.value;
+  // Show custom input for "others"
+  custom.style.display=val==='others'?'':'none';
+  // Auto-set factory from data-factory attribute
+  const opt=sel.options[sel.selectedIndex];
+  const fact=opt.getAttribute('data-factory');
+  if(fact) factory.value=fact;
+};
+
 // CREATE PROJECT
 window.createProject=async()=>{
   const displayName=document.getElementById('inp-projDisplayName').value.trim();
   const kode=document.getElementById('inp-projName').value.trim();
-  const buyer=document.getElementById('inp-buyer').value.trim();
+  const buyerSel=document.getElementById('inp-buyer').value;
+  const buyerCustom=document.getElementById('inp-buyer-custom').value.trim();
+  const buyer=buyerSel==='others'?(buyerCustom||'Others'):buyerSel;
+  const factory=document.getElementById('inp-factory').value;
   const emailDt=document.getElementById('inp-emailApproved').value;
   const prodDt=document.getElementById('inp-prodDate').value;
   const packDt=document.getElementById('inp-packingDate').value;
   const notes=document.getElementById('inp-notes').value.trim();
   if(!displayName||!emailDt){alert('Nama project dan tanggal Email Approved wajib diisi.');return;}
-  const name=displayName; // nama sebagai display utama
-  const projRef=await addDoc(collection(db,'projects'),{name,kode,buyer,emailApprovedDate:emailDt,prodDate:prodDt,packingDate:packDt,notes,createdBy:currentName,createdAt:Timestamp.now(),status:'active'});
+  const name=displayName;
+  const projRef=await addDoc(collection(db,'projects'),{name,kode,buyer,factory,emailApprovedDate:emailDt,prodDate:prodDt,packingDate:packDt,notes,createdBy:currentName,createdAt:Timestamp.now(),status:'active'});
   const dl=computeDeadlines(emailDt,packDt);
   for(const td of TASK_DEFINITIONS){
     await setDoc(doc(db,'projects',projRef.id,'tasks',td.id),{
@@ -1453,10 +1561,10 @@ window.createProject=async()=>{
     });
   }
   closeModal('modalNewProject');
-  projectsCache[projRef.id]={id:projRef.id,name,kode,prodDate:prodDt};
+  projectsCache[projRef.id]={id:projRef.id,name,kode,buyer,factory,prodDate:prodDt};
+  const label=name+(kode?` (${kode})`:'')+( buyer?` · ${buyer}`:'')+( factory?` · ${factory}`:'');
   ['projectSelect','projectSelectTasks'].forEach(id=>{
-    const o=document.createElement('option');o.value=projRef.id;
-    o.textContent=name+(kode?` (${kode})`:'');
+    const o=document.createElement('option');o.value=projRef.id;o.textContent=name+(kode?` (${kode})`:'');
     document.getElementById(id).appendChild(o);
   });
   document.getElementById('projectSelect').value=projRef.id;
@@ -1469,7 +1577,19 @@ window.openEditProjectModal=()=>{
   const p=projectsCache[currentProjId];if(!p)return;
   document.getElementById('edit-projDisplayName').value=p.name||'';
   document.getElementById('edit-projName').value=p.kode||'';
-  document.getElementById('edit-buyer').value=p.buyer||'';
+  // Buyer
+  const buyerSel=document.getElementById('edit-buyer');
+  const buyerCustom=document.getElementById('edit-buyer-custom');
+  const knownBuyers=['amd','bionic','callaway','first tactical','ghost','puma','rlf','taylormade','travis mathew','verb'];
+  if(knownBuyers.includes((p.buyer||'').toLowerCase())){
+    buyerSel.value=(p.buyer||'').toLowerCase();
+    buyerCustom.style.display='none';
+  } else if(p.buyer){
+    buyerSel.value='others';
+    buyerCustom.value=p.buyer;
+    buyerCustom.style.display='';
+  }
+  document.getElementById('edit-factory').value=p.factory||'';
   document.getElementById('edit-emailApproved').value=p.emailApprovedDate||'';
   document.getElementById('edit-prodDate').value=p.prodDate||'';
   document.getElementById('edit-packingDate').value=p.packingDate||'';
@@ -1480,14 +1600,17 @@ window.saveEditProject=async()=>{
   if(!currentProjId)return;
   const name=document.getElementById('edit-projDisplayName').value.trim();
   const kode=document.getElementById('edit-projName').value.trim();
-  const buyer=document.getElementById('edit-buyer').value.trim();
+  const buyerSel=document.getElementById('edit-buyer').value;
+  const buyerCustom=document.getElementById('edit-buyer-custom').value.trim();
+  const buyer=buyerSel==='others'?(buyerCustom||'Others'):buyerSel;
+  const factory=document.getElementById('edit-factory').value;
   const emailDt=document.getElementById('edit-emailApproved').value;
   const prodDt=document.getElementById('edit-prodDate').value;
   const packDt=document.getElementById('edit-packingDate').value;
   const notes=document.getElementById('edit-notes').value.trim();
   if(!name){alert('Nama project wajib diisi.');return;}
-  await updateDoc(doc(db,'projects',currentProjId),{name,kode,buyer,emailApprovedDate:emailDt,prodDate:prodDt,packingDate:packDt,notes});
-  projectsCache[currentProjId]={...projectsCache[currentProjId],name,kode,buyer,emailApprovedDate:emailDt,prodDate:prodDt,packingDate:packDt,notes};
+  await updateDoc(doc(db,'projects',currentProjId),{name,kode,buyer,factory,emailApprovedDate:emailDt,prodDate:prodDt,packingDate:packDt,notes});
+  projectsCache[currentProjId]={...projectsCache[currentProjId],name,kode,buyer,factory,emailApprovedDate:emailDt,prodDate:prodDt,packingDate:packDt,notes};
   document.querySelectorAll('#projectSelect option,#projectSelectTasks option').forEach(o=>{
     if(o.value===currentProjId)o.textContent=name+(kode?` (${kode})`:'');
   });
