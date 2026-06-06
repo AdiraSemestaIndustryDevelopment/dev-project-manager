@@ -385,26 +385,23 @@ body::before {
 }
 .btn-cancel:hover{background:rgba(255,255,255,0.1);color:var(--text);}
 
-/* PROJECT OVERVIEW CARD OVERDUE BLINK */
+/* PROJECT OVERVIEW CARD */
 @keyframes projOverdueGlow {
   0%,100% { border-color:rgba(255,68,68,0.3); box-shadow:0 0 0px rgba(255,68,68,0); }
   50%      { border-color:rgba(255,68,68,0.9); box-shadow:0 0 18px rgba(255,68,68,0.4),0 0 40px rgba(255,68,68,0.15); }
 }
-.proj-overview-card.urgent {
-  border-left:3px solid var(--red);
-  animation: projOverdueGlow 1.6s ease-in-out infinite;
-}
-
-/* ALL PROJECTS OVERVIEW */
 .proj-overview-card {
   background:rgba(255,255,255,0.03);border:1px solid var(--border);
   border-radius:14px;padding:20px 24px;margin-bottom:12px;
-  transition:all 0.2s;cursor:pointer;backdrop-filter:blur(10px);
+  transition:border-color 0.2s,background 0.2s;cursor:pointer;backdrop-filter:blur(10px);
 }
 .proj-overview-card:hover{border-color:rgba(57,255,20,0.3);background:rgba(57,255,20,0.03);}
-.proj-overview-card.urgent{border-left:3px solid var(--red);}
-.proj-overview-card.warning-card{border-left:3px solid var(--orange);}
 .proj-overview-card.ok{border-left:3px solid var(--green);}
+.proj-overview-card.warning-card{border-left:3px solid var(--orange);}
+.proj-overview-card.urgent{
+  border-left:3px solid var(--red);
+  animation: projOverdueGlow 1.6s ease-in-out infinite;
+}
 .proj-ov-top{display:flex;align-items:flex-start;gap:10px;margin-bottom:12px;flex-wrap:wrap;}
 .proj-ov-name{font-family:'Plus Jakarta Sans',sans-serif;font-size:15px;font-weight:700;flex:1;}
 .proj-ov-sub{font-size:11px;color:var(--text3);margin-top:2px;}
@@ -1355,7 +1352,10 @@ window.renderAllProjects = async function renderAllProjects(){
   if(kpiProddate)kpiProddate.textContent=`Project aktif`;
 
   container.innerHTML=projStats.map(({proj,total,done,overdue,warning,pct,prodDays})=>{
-    const cardClass=overdue>0?'urgent':warning>0?'warning-card':'ok';
+    // Card blink merah jika: ada overdue ATAU prodDate <= H-14 dengan task belum selesai
+    const hasIncomplete=tasks.some(t=>t.status!=='done');
+    const isUrgentProd=prodDays<=14&&hasIncomplete;
+    const cardClass=overdue>0||isUrgentProd?'urgent':warning>0?'warning-card':'ok';
     const barColor=overdue>0?'var(--red)':warning>0?'var(--orange)':pct===100?'var(--green)':'var(--accent)';
     const pctColor=overdue>0?'var(--red)':warning>0?'var(--orange)':pct===100?'var(--green)':'var(--accent)';
     const prodStr=proj.prodDate?new Date(proj.prodDate).toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'}):'—';
