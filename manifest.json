@@ -1,0 +1,42 @@
+{
+  "name": "Dev PM — Development Project Manager",
+  "short_name": "Dev PM",
+  "description": "Development Project Manager untuk tim Adira Semesta Industry",
+  "start_url": "/dev-project-manager/",
+  "scope": "/dev-project-manager/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#080A0E",
+  "theme_color": "#080A0E",
+  "icons": [
+    {
+      "src": "/dev-project-manager/icons/icon-72.png",
+      "sizes": "72x72",
+      "type": "image/png"
+    },
+    {
+      "src": "/dev-project-manager/icons/icon-96.png",
+      "sizes": "96x96",
+      "type": "image/png"
+    },
+    {
+      "src": "/dev-project-manager/icons/icon-128.png",
+      "sizes": "128x128",
+      "type": "image/png"
+    },
+    {
+      "src": "/dev-project-manager/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/dev-project-manager/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["productivity", "business"],
+  "lang": "id"
+}
