@@ -726,6 +726,29 @@ body::before {
 
       <!-- TAB: Notifikasi -->
       <div id="admin-notif" style="display:none">
+
+        <!-- KIRIM NOTIF MANUAL -->
+        <div class="kpi-card" style="margin-bottom:24px;border:1px solid rgba(57,255,20,0.2);">
+          <div style="font-size:14px;font-weight:700;color:var(--accent);margin-bottom:8px;">🔔 Kirim Notifikasi Pengingat Manual</div>
+          <div style="font-size:12px;color:var(--text3);margin-bottom:16px;line-height:1.7;">
+            Kirim notifikasi browser ke semua PIC yang masih punya task belum selesai.<br>
+            Notifikasi akan muncul di browser PIC yang sedang membuka website dan sudah mengaktifkan notifikasi.
+          </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px;">
+            <select class="form-select" id="notifProjFilter" style="padding:8px 14px;font-size:12px;min-width:200px;">
+              <option value="">Semua Project</option>
+            </select>
+            <select class="form-select" id="notifPicFilter" style="padding:8px 14px;font-size:12px;min-width:160px;">
+              <option value="">Semua PIC</option>
+            </select>
+            <button class="btn-primary" onclick="sendManualNotif()" style="padding:10px 24px;font-size:13px;flex:none;">
+              📣 Kirim Sekarang
+            </button>
+          </div>
+          <div id="notifSendResult" style="font-size:12px;margin-top:8px;"></div>
+        </div>
+
+        <!-- REKAP NOTIF -->
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px;">
           <div style="font-size:13px;color:var(--text2);font-weight:600;">Rekap task yang memicu notifikasi pengingat</div>
           <button class="btn-primary" onclick="loadNotifLog()" style="padding:7px 16px;font-size:12px;flex:none;">🔄 Refresh</button>
@@ -1036,6 +1059,10 @@ onAuthStateChanged(auth, async(user)=>{
   if(currentRole==='sales'||currentRole==='admin') document.getElementById('fabNewProject').classList.add('show');
   await loadProjects();
   checkNotif();
+  // Cek notifikasi pending dari admin setelah 2 detik
+  setTimeout(()=>checkPendingNotifications(), 2000);
+  // Cek berkala setiap 5 menit
+  setInterval(()=>checkPendingNotifications(), 5*60*1000);
   // Record last seen
   try {
     await setDoc(doc(db,'user_activity',user.email),{
@@ -1043,9 +1070,34 @@ onAuthStateChanged(auth, async(user)=>{
       email:user.email,lastSeen:Timestamp.now()
     },{merge:true});
   } catch(e){}
-});
+  // Cek notifikasi manual yang belum dibaca
+  checkPendingManualNotif(info.name);});
 
 document.getElementById('btnLogout').onclick=async()=>{await signOut(auth);window.location.href='../';};
+
+// CEK NOTIFIKASI MANUAL YANG BELUM DIBACA
+async function checkPendingManualNotif(picName){
+  if(Notification.permission!=='granted')return;
+  try{
+    const snap=await getDocs(collection(db,'notifications'));
+    for(const d of snap.docs){
+      const notif=d.data();
+      if(notif.type!=='manual')continue;
+      if(notif.read&&notif.read[picName])continue;
+      const myTasks=notif.picTasks?.[picName];
+      if(!myTasks||!myTasks.length)continue;
+      const body=myTasks.slice(0,5).map(t=>
+        `• ${t.taskName}\n  📁 ${t.projName}${t.projKode?` (${t.projKode})`:''}`
+      ).join('\n')+(myTasks.length>5?`\n... +${myTasks.length-5} task lainnya`:'');
+      new Notification(`📋 Dev PM — Pengingat Task untuk ${picName}`,{
+        body,tag:'devpm-manual-'+d.id,requireInteraction:true
+      });
+      await updateDoc(doc(db,'notifications',d.id),{
+        [`read.${picName}`]:new Date().toISOString()
+      });
+    }
+  }catch(e){console.warn('checkPendingManualNotif:',e);}
+}
 
 // NOTIF
 function checkNotif(){
@@ -1883,21 +1935,178 @@ window.switchAdminTab=(tab)=>{
     document.getElementById('tab-'+t).classList.toggle('active',t===tab);
   });
   if(tab==='log') loadActivityLog();
-  if(tab==='notif') loadNotifLog();
+  if(tab==='notif'){ loadNotifLog(); populateNotifFilters(); }
   if(tab==='settings') loadSettings();
+};
+
+// Populate filter dropdowns di tab notif
+function populateNotifFilters(){
+  const projSel=document.getElementById('notifProjFilter');
+  const picSel=document.getElementById('notifPicFilter');
+  if(!projSel||!picSel)return;
+  // Reset
+  while(projSel.options.length>1)projSel.remove(1);
+  while(picSel.options.length>1)picSel.remove(1);
+  // Projects
+  Object.values(projectsCache).forEach(p=>{
+    const o=document.createElement('option');o.value=p.id;o.textContent=p.name+(p.kode?` (${p.kode})`:'');projSel.appendChild(o);
+  });
+  // PICs dari TASK_DEFINITIONS
+  const pics=[...new Set(TASK_DEFINITIONS.flatMap(t=>t.pics))].sort();
+  pics.forEach(pic=>{
+    const o=document.createElement('option');o.value=pic;o.textContent=pic;picSel.appendChild(o);
+  });
+}
+
+// KIRIM NOTIFIKASI MANUAL
+// LISTENER NOTIFIKASI MANUAL — untuk setiap PIC yang buka web
+async function checkPendingNotifications(){
+  if(!currentUser||!currentName)return;
+  if(Notification.permission!=='granted')return;
+
+  try{
+    // Ambil notifikasi yang dikirim dalam 24 jam terakhir
+    const since=new Date(Date.now()-24*60*60*1000);
+    const snap=await getDocs(collection(db,'notifications'));
+    for(const d of snap.docs){
+      const notif=d.data();
+      if(notif.type!=='manual')continue;
+      // Cek apakah sudah dibaca oleh PIC ini
+      if(notif.read&&notif.read[currentName])continue;
+      // Cek apakah notif ini ditujukan ke PIC ini
+      const myTasks=notif.picTasks&&notif.picTasks[currentName];
+      if(!myTasks||!myTasks.length)continue;
+
+      // Tampilkan notifikasi dengan detail task
+      const taskLines=myTasks.slice(0,8).map(t=>
+        `• ${t.taskName} — ${t.projName}${t.projKode?` (${t.projKode})`:''}`
+      ).join('\n');
+      const body=`Halo ${currentName}! Kamu masih punya ${myTasks.length} task belum selesai:\n\n${taskLines}`+
+        (myTasks.length>8?`\n...+${myTasks.length-8} task lainnya`:'');
+
+      new Notification('📋 Dev PM — Pengingat dari Admin',{
+        body,
+        requireInteraction:true,
+        tag:'devpm-manual-'+d.id
+      });
+
+      // Tandai sudah dibaca
+      const readUpdate={};
+      readUpdate[`read.${currentName}`]=true;
+      await updateDoc(doc(db,'notifications',d.id),readUpdate);
+    }
+  }catch(e){console.warn('checkPendingNotifications error:',e);}
+}
+
+window.sendManualNotif=async()=>{
+  if(currentRole!=='admin'){alert('Hanya admin yang bisa mengirim notifikasi manual.');return;}
+  if(Notification.permission!=='granted'){
+    alert('Aktifkan notifikasi browser dulu di perangkat Anda.');return;
+  }
+  const projFilter=document.getElementById('notifProjFilter').value;
+  const picFilter=document.getElementById('notifPicFilter').value;
+  const resultEl=document.getElementById('notifSendResult');
+  resultEl.textContent='⏳ Menyiapkan notifikasi...';
+  resultEl.style.color='var(--text3)';
+
+  const today=new Date();today.setHours(0,0,0,0);
+
+  // Kumpulkan semua task per PIC
+  const picTasks={}; // { picName: [{taskName, projName, projKode, deadline, status}] }
+
+  const projs=projFilter?[projectsCache[projFilter]]:Object.values(projectsCache);
+  for(const proj of projs){
+    try{
+      const snap=await getDocs(collection(db,'projects',proj.id,'tasks'));
+      snap.forEach(d=>{
+        const t=d.data();
+        if(t.status==='done')return; // skip yang sudah selesai
+        (t.pics||[]).forEach(pic=>{
+          if(picFilter&&pic!==picFilter)return;
+          if(!picTasks[pic])picTasks[pic]=[];
+          picTasks[pic].push({
+            taskName:t.name,
+            projName:proj.name,
+            projKode:proj.kode||'',
+            deadline:t.deadline||'',
+            division:t.division
+          });
+        });
+      });
+    }catch(e){}
+  }
+
+  const totalPic=Object.keys(picTasks).length;
+  if(!totalPic){
+    resultEl.textContent='✅ Tidak ada PIC dengan task yang belum selesai.';
+    resultEl.style.color='var(--green)';
+    return;
+  }
+
+  // Kirim notifikasi satu per satu per PIC
+  // (browser hanya bisa kirim ke user yang sedang buka tab ini)
+  // Kita kirim notifikasi BROADCAST — semua PIC yang buka web akan lihat task mereka
+  // Simpan ke Firestore sebagai "pending notification" yang akan dibaca tiap PIC saat buka web
+  const notifId=`manual_${Date.now()}`;
+  const sentAt=new Date().toISOString();
+
+  await setDoc(doc(db,'notifications',notifId),{
+    type:'manual',
+    sentBy:currentName,
+    sentAt:Timestamp.now(),
+    projFilter:projFilter||'all',
+    picFilter:picFilter||'all',
+    picTasks:picTasks,
+    read:{}
+  });
+
+  // Kirim notif browser untuk diri sendiri (preview)
+  const previewPic=picFilter||(Object.keys(picTasks)[0]||'');
+  if(previewPic&&picTasks[previewPic]){
+    const tasks=picTasks[previewPic].slice(0,5);
+    const body=tasks.map(t=>`• ${t.taskName}\n  📁 ${t.projName}${t.projKode?` (${t.projKode})`:''}`).join('\n')+
+      (picTasks[previewPic].length>5?`\n... +${picTasks[previewPic].length-5} task lainnya`:'');
+    new Notification(`📋 Dev PM — Pengingat untuk ${previewPic}`,{
+      body,tag:'devpm-manual-'+previewPic,requireInteraction:true
+    });
+  }
+
+  resultEl.innerHTML=`✅ Notifikasi terkirim ke <strong style="color:var(--accent)">${totalPic} PIC</strong>. Mereka akan menerima pengingat saat membuka website.`;
+  resultEl.style.color='var(--green)';
+
+  // Log ke activity
+  try{
+    await setDoc(doc(db,'user_activity','admin_notif_'+Date.now()),{
+      name:currentName,division:'admin',role:'admin',email:currentUser.email,
+      lastSeen:Timestamp.now(),action:'send_manual_notif',totalPic
+    },{merge:false});
+  }catch(e){}
 };
 
 // Init admin — load log filter projects & last seen
 async function initAdminPanel(){
-  // Populate project filter
-  const sel=document.getElementById('logFilterProject');
-  if(sel.options.length<=1){
-    Object.values(projectsCache).forEach(p=>{
-      const o=document.createElement('option');o.value=p.id;o.textContent=p.name;sel.appendChild(o);
-    });
-  }
+  // Populate project filters (log & notif)
+  const logSel=document.getElementById('logFilterProject');
+  const notifProjSel=document.getElementById('notifProjFilter');
+  const notifPicSel=document.getElementById('notifPicFilter');
+
+  // Clear & repopulate
+  if(logSel) while(logSel.options.length>1)logSel.remove(1);
+  if(notifProjSel) while(notifProjSel.options.length>1)notifProjSel.remove(1);
+  if(notifPicSel) while(notifPicSel.options.length>1)notifPicSel.remove(1);
+
+  Object.values(projectsCache).forEach(p=>{
+    if(logSel){const o=document.createElement('option');o.value=p.id;o.textContent=p.name;logSel.appendChild(o);}
+    if(notifProjSel){const o=document.createElement('option');o.value=p.id;o.textContent=p.name;notifProjSel.appendChild(o);}
+  });
+
+  // Populate PIC list dari USER_WHITELIST
+  const allPics=Object.values(USER_WHITELIST).filter(u=>u.role==='pic'||u.role==='sales');
+  allPics.sort((a,b)=>a.name.localeCompare(b.name)).forEach(u=>{
+    if(notifPicSel){const o=document.createElement('option');o.value=u.name;o.textContent=`${u.name} (${u.division})`;notifPicSel.appendChild(o);}
+  });
+
   switchAdminTab('log');
-  // Record last seen for current user
   await recordLastSeen();
 }
 
@@ -2138,8 +2347,96 @@ window.exportDeadlineCSV=async()=>{
   downloadCSV(`deadline-tasks-${new Date().toISOString().split('T')[0]}.csv`,rows);
 };
 
-// Settings
-window.loadSettings=()=>{
+// SEND MANUAL NOTIFICATION
+window.sendManualNotif=async()=>{
+  if(currentRole!=='admin'){alert('Hanya Admin yang bisa mengirim notifikasi manual.');return;}
+  if(!('Notification'in window)||Notification.permission!=='granted'){
+    alert('Notifikasi belum diaktifkan di browser ini. Aktifkan notifikasi terlebih dahulu.');return;
+  }
+  const projFilter=document.getElementById('notifProjFilter').value;
+  const picFilter=document.getElementById('notifPicFilter').value;
+  const resultEl=document.getElementById('notifSendResult');
+  resultEl.textContent='⏳ Sedang memproses...';resultEl.style.color='var(--text3)';
+
+  const today=new Date();today.setHours(0,0,0,0);
+  const parseDate=(s)=>{if(!s)return null;const[y,m,d]=s.split('-').map(Number);const dt=new Date(y,m-1,d);dt.setHours(0,0,0,0);return dt;};
+
+  // Kumpulkan semua task belum selesai per PIC
+  const picTasks={}; // {picName: [{taskName, projName, projKode, deadline, status}]}
+  const projs=projFilter?[projectsCache[projFilter]]:Object.values(projectsCache);
+
+  for(const proj of projs){
+    if(!proj)continue;
+    try{
+      const snap=await getDocs(collection(db,'projects',proj.id,'tasks'));
+      snap.forEach(d=>{
+        const t=d.data();
+        if(t.status==='done')return;
+        const dl=parseDate(t.deadline);
+        const diff=dl?Math.ceil((dl-today)/86400000):null;
+        const statusLabel=diff===null?'Belum ada deadline':diff<0?`⚠ OVERDUE ${Math.abs(diff)} hari`:diff===0?'⚠ HARI INI':diff<=3?`⏰ ${diff} hari lagi`:`${diff} hari lagi`;
+
+        (t.pics||[]).forEach(pic=>{
+          if(picFilter&&pic.toLowerCase()!==picFilter.toLowerCase())return;
+          if(!picTasks[pic])picTasks[pic]=[];
+          picTasks[pic].push({
+            taskName:t.name,
+            projName:proj.name,
+            projKode:proj.kode||'',
+            deadline:t.deadline||'',
+            statusLabel,
+            diff:diff??999
+          });
+        });
+      });
+    }catch(e){console.warn('Error loading project',proj.id,e);}
+  }
+
+  const pics=Object.keys(picTasks);
+  if(!pics.length){
+    resultEl.textContent='✅ Tidak ada task yang perlu dinotifikasi.';
+    resultEl.style.color='var(--green)';return;
+  }
+
+  let sent=0;
+  for(const[pic,tasks] of Object.entries(picTasks)){
+    // Sort tasks: overdue dulu
+    tasks.sort((a,b)=>a.diff-b.diff);
+    const overdueCount=tasks.filter(t=>t.diff<0).length;
+    const title=`📋 Dev PM — Halo ${pic}, ada ${tasks.length} task belum selesai`;
+
+    // Buat body notifikasi dengan list task
+    const taskLines=tasks.slice(0,5).map(t=>{
+      const projLabel=t.projName+(t.projKode?` (${t.projKode})`:``);
+      return `• [${projLabel}] ${t.taskName} — ${t.statusLabel}`;
+    });
+    if(tasks.length>5) taskLines.push(`...dan ${tasks.length-5} task lainnya`);
+    const body=taskLines.join('\n');
+
+    try{
+      new Notification(title,{
+        body,
+        icon:'../icon-192.png',
+        requireInteraction:true,
+        tag:`devpm-manual-${pic}-${Date.now()}`,
+      });
+      sent++;
+      // Log ke Firestore
+      await addDoc(collection(db,'notif_log'),{
+        sentBy:currentName,
+        sentAt:Timestamp.now(),
+        pic,
+        taskCount:tasks.length,
+        overdueCount,
+        type:'manual',
+        projFilter:projFilter||'all'
+      });
+    }catch(e){console.warn('Notif error for',pic,e);}
+  }
+
+  resultEl.innerHTML=`✅ Notifikasi berhasil dikirim ke <strong style="color:var(--accent)">${sent} PIC</strong> dengan total <strong style="color:var(--accent)">${Object.values(picTasks).reduce((a,b)=>a+b.length,0)} task</strong> belum selesai.<br><span style="font-size:11px;color:var(--text3)">Notifikasi muncul di browser PIC yang sedang membuka website dan sudah aktifkan notifikasi.</span>`;
+  resultEl.style.color='var(--green)';
+};
   document.getElementById('setting-warningDays').value=localStorage.getItem('setting_warningDays')||'3';
   document.getElementById('setting-notifDays').value=localStorage.getItem('setting_notifDays')||'7';
   document.getElementById('setting-notif1').value=localStorage.getItem('setting_notif1')||'08:00';
