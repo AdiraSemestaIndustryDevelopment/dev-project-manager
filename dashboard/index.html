@@ -1354,9 +1354,9 @@ window.renderAllProjects = async function renderAllProjects(){
   if(kpiProddays)kpiProddays.textContent=projStats.length;
   if(kpiProddate)kpiProddate.textContent=`Project aktif`;
 
-  container.innerHTML=projStats.map(({proj,total,done,overdue,warning,pct,prodDays})=>{
+  container.innerHTML=projStats.map(({proj,total,done,overdue,warning,pct,prodDays,tasks})=>{
     // Card blink merah jika: ada overdue ATAU prodDate <= H-14 dengan task belum selesai
-    const hasIncomplete=tasks.some(t=>t.status!=='done');
+    const hasIncomplete=(tasks||[]).some(t=>t.status!=='done');
     const isUrgentProd=prodDays<=14&&hasIncomplete;
     const cardClass=overdue>0||isUrgentProd?'urgent':warning>0?'warning-card':'ok';
     const barColor=overdue>0?'var(--red)':warning>0?'var(--orange)':pct===100?'var(--green)':'var(--accent)';
