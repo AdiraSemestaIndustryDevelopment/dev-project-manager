@@ -1351,8 +1351,11 @@ window.renderAllProjects = async function renderAllProjects(){
   // Hapus proddays di lobby (tidak relevan untuk semua project)
   const kpiProddays=document.getElementById('kpi-proddays');
   const kpiProddate=document.getElementById('kpi-proddate');
-  if(kpiProddays)kpiProddays.textContent=projStats.length;
-  if(kpiProddate)kpiProddate.textContent=`Project aktif`;
+  if(kpiProddays){kpiProddays.textContent=projStats.length;kpiProddays.className='kpi-num purple';}
+  if(kpiProddate)kpiProddate.textContent='Project aktif';
+  // Update label card ke "Total Project" saat di lobby
+  const prodTag=document.querySelector('#kpi-proddays')?.closest('.kpi-card')?.querySelector('.kpi-tag');
+  if(prodTag)prodTag.textContent='Total Project';
 
   container.innerHTML=projStats.map(({proj,total,done,overdue,warning,pct,prodDays,tasks})=>{
     // Card blink merah jika: ada overdue ATAU prodDate <= H-14 dengan task belum selesai
@@ -1486,13 +1489,8 @@ window.loadProject=async(projId)=>{
     document.getElementById('proj-subtitle').textContent='';
     const nb=document.getElementById('proj-notes-bar');
     if(nb) nb.textContent='';
-    // Reset KPI cards
-    ['kpi-total','kpi-done','kpi-overdue','kpi-warning','kpi-proddays'].forEach(id=>{
-      const el=document.getElementById(id);if(el)el.textContent='—';
-    });
-    const tdesc=document.getElementById('kpi-total-desc');if(tdesc)tdesc.textContent='Pilih project';
-    const dpct=document.getElementById('kpi-done-pct');if(dpct)dpct.textContent='—';
-    const pdate=document.getElementById('kpi-proddate');if(pdate)pdate.textContent='Belum diset';
+    // KPI akan diisi oleh renderAllProjects — tidak perlu reset ke —
+    await renderAllProjects();
     return;
   }
   document.getElementById('allProjectsSection').style.display='none';
