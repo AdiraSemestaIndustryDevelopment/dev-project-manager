@@ -12,6 +12,7 @@
 <link rel="apple-touch-icon" href="../icons/icon-192.png">
 <title>Dashboard — Dev PM</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <style>
 :root {
   --bg:        #080A0E;
@@ -751,25 +752,40 @@ body { padding-top: env(safe-area-inset-top); }
       <!-- TAB: Notifikasi -->
       <div id="admin-notif" style="display:none">
 
-        <!-- KIRIM NOTIF MANUAL -->
+        <!-- KIRIM EMAIL NOTIF -->
         <div class="kpi-card" style="margin-bottom:24px;border:1px solid rgba(57,255,20,0.2);">
-          <div style="font-size:14px;font-weight:700;color:var(--accent);margin-bottom:8px;">🔔 Kirim Notifikasi Pengingat Manual</div>
+          <div style="font-size:14px;font-weight:700;color:var(--accent);margin-bottom:8px;">📧 Kirim Email Pengingat ke PIC</div>
           <div style="font-size:12px;color:var(--text3);margin-bottom:16px;line-height:1.7;">
-            Kirim notifikasi browser ke semua PIC yang masih punya task belum selesai.<br>
-            Notifikasi akan muncul di browser PIC yang sedang membuka website dan sudah mengaktifkan notifikasi.
+            Email akan dikirim langsung ke inbox PIC berisi daftar task yang belum selesai.<br>
+            Email masuk bahkan saat PIC tidak membuka aplikasi.
           </div>
-          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px;">
-            <select class="form-select" id="notifProjFilter" style="padding:8px 14px;font-size:12px;min-width:200px;">
-              <option value="">Semua Project</option>
-            </select>
-            <select class="form-select" id="notifPicFilter" style="padding:8px 14px;font-size:12px;min-width:160px;">
-              <option value="">Semua PIC</option>
-            </select>
-            <button class="btn-primary" onclick="sendManualNotif()" style="padding:10px 24px;font-size:13px;flex:none;">
-              📣 Kirim Sekarang
+          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:12px;">
+            <div>
+              <label style="font-size:10px;color:var(--text3);display:block;margin-bottom:4px;letter-spacing:0.1em;">FILTER PROJECT</label>
+              <select class="form-select" id="notifProjFilter" style="padding:8px 14px;font-size:12px;min-width:200px;">
+                <option value="">Semua Project</option>
+              </select>
+            </div>
+            <div>
+              <label style="font-size:10px;color:var(--text3);display:block;margin-bottom:4px;letter-spacing:0.1em;">FILTER PIC</label>
+              <select class="form-select" id="notifPicFilter" style="padding:8px 14px;font-size:12px;min-width:160px;">
+                <option value="">Semua PIC</option>
+              </select>
+            </div>
+            <button class="btn-primary" onclick="sendEmailNotif()" style="padding:10px 24px;font-size:13px;flex:none;">
+              📧 Kirim Email Sekarang
             </button>
           </div>
-          <div id="notifSendResult" style="font-size:12px;margin-top:8px;"></div>
+          <div id="notifSendResult" style="font-size:12px;margin-top:8px;line-height:1.8;"></div>
+        </div>
+
+        <!-- JADWAL OTOMATIS INFO -->
+        <div class="kpi-card" style="margin-bottom:24px;border:1px solid var(--border);">
+          <div style="font-size:13px;font-weight:700;margin-bottom:8px;">⏰ Email Otomatis Harian</div>
+          <div style="font-size:12px;color:var(--text3);line-height:1.8;">
+            Email otomatis dikirim setiap hari pada jam yang diset di tab <strong style="color:var(--accent)">Pengaturan</strong>.<br>
+            Default: <strong style="color:var(--accent)">08:00</strong> dan <strong style="color:var(--accent)">14:00</strong> — hanya untuk PIC yang masih punya task belum selesai.
+          </div>
         </div>
 
         <!-- REKAP NOTIF -->
@@ -1090,6 +1106,7 @@ onAuthStateChanged(auth, async(user)=>{
   if(currentRole==='sales'||currentRole==='admin') document.getElementById('fabNewProject').classList.add('show');
   await loadProjects();
   checkNotif();
+  scheduleEmailNotif();
   // Cek notifikasi pending dari admin setelah 2 detik
   setTimeout(()=>checkPendingNotifications(), 2000);
   // Cek berkala setiap 5 menit
@@ -1131,6 +1148,94 @@ async function checkPendingManualNotif(picName){
 }
 
 // NOTIF
+// ── EMAILJS CONFIG ───────────────────────────────────────────
+const EMAILJS_SERVICE_ID  = 'devpm_outlook';
+const EMAILJS_TEMPLATE_ID = 'template_ttk5r4b';
+const EMAILJS_PUBLIC_KEY  = '4OgSkYNsfoxjG2FkZ';
+
+const PIC_EMAILS = {
+  'Jessie':'jessietan0301@gmail.com','Jessica':'jessicanathania.asi@gmail.com',
+  'Yunita':'gryphonso4@gmail.com','Anggita':'anggitavitaa@gmail.com','Dita':'ditaadistiaf1202@gmail.com',
+  'Feira':'feiradewiif@gmail.com','Helda':'risnandahelda@gmail.com','Anti':'antisulistyanti@gmail.com',
+  'Lanti':'lantitriagustina17@gmail.com','Tari':'saputritari@gmail.com','Eki':'ekidwiyanto@gmail.com',
+  'Rivaldi':'rivaldi.asiglove@gmail.com','Wulan':'wulandarimaulida4621@gmail.com',
+  'Vanny':'vannyeeeh@gmail.com','Wiji':'triwijiastuti197@gmail.com','Yogi':'geomon1802@gmail.com',
+  'Ase':'agussediana74@gmail.com','Reza':'raezaldi26@gmail.com','Irene':'irenne725@gmail.com',
+  'Dandi':'kurniawandandi447@gmail.com','Helmina':'naminaemy@gmail.com','Siska':'siska.sindhu.sas@gmail.com',
+};
+
+window.sendEmailNotif=async(isAuto=false)=>{
+  if(!isAuto&&currentRole!=='admin'){alert('Hanya Admin.');return;}
+  const resultEl=document.getElementById('notifSendResult');
+  if(resultEl){resultEl.textContent='⏳ Mengirim email...';resultEl.style.color='var(--text3)';}
+  const today=new Date();today.setHours(0,0,0,0);
+  const pd=(s)=>{if(!s)return null;const[y,m,d]=s.split('-').map(Number);const dt=new Date(y,m-1,d);dt.setHours(0,0,0,0);return dt;};
+  const projFilter=document.getElementById('notifProjFilter')?.value||'';
+  const picFilter=document.getElementById('notifPicFilter')?.value||'';
+  const picTasks={};
+  const projs=projFilter?[projectsCache[projFilter]]:Object.values(projectsCache);
+  for(const proj of projs){
+    if(!proj)continue;
+    try{
+      const snap=await getDocs(collection(db,'projects',proj.id,'tasks'));
+      snap.forEach(d=>{
+        const t=d.data();if(t.status==='done')return;
+        const dl=pd(t.deadline);
+        const diff=dl?Math.ceil((dl-today)/86400000):null;
+        const sl=diff===null?'Belum ada deadline':diff<0?`⚠ OVERDUE ${Math.abs(diff)} hari`:diff===0?'⚠ HARI INI':diff<=3?`⏰ ${diff} hari lagi`:`${diff} hari lagi`;
+        (t.pics||[]).forEach(pic=>{
+          if(picFilter&&pic.toLowerCase()!==picFilter.toLowerCase())return;
+          if(!PIC_EMAILS[pic])return;
+          if(!picTasks[pic])picTasks[pic]=[];
+          picTasks[pic].push({taskName:t.name,projName:proj.name,projKode:proj.kode||'',sl,diff:diff??999});
+        });
+      });
+    }catch(e){console.warn(e);}
+  }
+  const pics=Object.keys(picTasks);
+  if(!pics.length){
+    if(resultEl){resultEl.textContent='✅ Tidak ada task yang perlu dinotifikasi.';resultEl.style.color='var(--green)';}
+    return;
+  }
+  emailjs.init(EMAILJS_PUBLIC_KEY);
+  let sent=0,failed=0;
+  for(const[pic,tasks] of Object.entries(picTasks)){
+    tasks.sort((a,b)=>a.diff-b.diff);
+    const overdueCount=tasks.filter(t=>t.diff<0).length;
+    const taskLines=tasks.map((t,i)=>{
+      const icon=t.diff<0?'🔴':t.diff<=3?'🟡':'⚪';
+      return `${i+1}. ${icon} [${t.projName}${t.projKode?` (${t.projKode})`:''  }] ${t.taskName} — ${t.sl}`;
+    }).join('\n');
+    const summary=overdueCount>0?`⚠️ ${overdueCount} task OVERDUE dari ${tasks.length} task belum selesai`:`📋 ${tasks.length} task belum selesai`;
+    try{
+      await emailjs.send(EMAILJS_SERVICE_ID,EMAILJS_TEMPLATE_ID,{
+        to_name:pic,to_email:PIC_EMAILS[pic],
+        summary,task_list:taskLines,total_task:tasks.length,
+        sent_by:currentName||'Admin',
+        sent_time:new Date().toLocaleString('id-ID'),
+      });
+      sent++;
+      await addDoc(collection(db,'notif_log'),{sentBy:currentName,sentAt:Timestamp.now(),pic,email:PIC_EMAILS[pic],taskCount:tasks.length,overdueCount,type:isAuto?'auto':'manual'});
+      await new Promise(r=>setTimeout(r,600));
+    }catch(e){console.error(`Gagal ${pic}:`,e);failed++;}
+  }
+  const msg=`✅ Email terkirim ke <strong style="color:var(--accent)">${sent} PIC</strong>${failed>0?`, ${failed} gagal`:''}.`;
+  if(resultEl){resultEl.innerHTML=msg;resultEl.style.color='var(--green)';}
+};
+
+function scheduleEmailNotif(){
+  if(currentRole!=='admin')return;
+  const h1=localStorage.getItem('setting_notif1')||'08:00';
+  const h2=localStorage.getItem('setting_notif2')||'14:00';
+  [h1,h2].forEach(timeStr=>{
+    const[hh,mm]=timeStr.split(':').map(Number);
+    const now=new Date(),t=new Date();
+    t.setHours(hh,mm,0,0);if(t<=now)t.setDate(t.getDate()+1);
+    setTimeout(()=>{sendEmailNotif(true);setInterval(()=>sendEmailNotif(true),86400000);},t-now);
+    console.log(`Email otomatis: ${timeStr}`);
+  });
+}
+
 function checkNotif(){
   if(!('Notification' in window)||Notification.permission==='granted'){
     document.getElementById('notifBar').classList.add('hidden');
