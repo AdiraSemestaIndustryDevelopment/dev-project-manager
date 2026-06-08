@@ -1209,7 +1209,9 @@ window.sendEmailNotif=async(isAuto=false)=>{
     const summary=overdueCount>0?`⚠️ ${overdueCount} task OVERDUE dari ${tasks.length} task belum selesai`:`📋 ${tasks.length} task belum selesai`;
     try{
       await emailjs.send(EMAILJS_SERVICE_ID,EMAILJS_TEMPLATE_ID,{
-        to_name:pic,to_email:PIC_EMAILS[pic],
+        to_name:pic,
+        to_email:PIC_EMAILS[pic],
+        email:PIC_EMAILS[pic],
         summary,task_list:taskLines,total_task:tasks.length,
         sent_by:currentName||'Admin',
         sent_time:new Date().toLocaleString('id-ID'),
