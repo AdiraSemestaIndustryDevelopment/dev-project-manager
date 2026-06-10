@@ -2666,10 +2666,14 @@ document.querySelectorAll('.modal-overlay').forEach(el=>el.addEventListener('cli
 // ══════════════════════════════════════════════════════
 // AI INTEGRATION — Claude API
 // ══════════════════════════════════════════════════════
-const CLAUDE_API_KEY = 'GANTI_DENGAN_API_KEY_KAMU'; // ← isi API key Anthropic di sini
+// API key — bisa diisi langsung di sini ATAU via input di modal AI Assistant
+let CLAUDE_API_KEY = localStorage.getItem('devpm_ai_key') || 'GANTI_DENGAN_API_KEY_KAMU';
 const CLAUDE_MODEL   = 'claude-sonnet-4-20250514';
 
 async function callClaude(systemPrompt, userMessage) {
+  if (!CLAUDE_API_KEY || CLAUDE_API_KEY === 'GANTI_DENGAN_API_KEY_KAMU') {
+    throw new Error('API key belum diisi! Buka file dashboard/index.html, cari baris CLAUDE_API_KEY dan isi dengan API key dari console.anthropic.com');
+  }
   const resp = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
@@ -2685,13 +2689,27 @@ async function callClaude(systemPrompt, userMessage) {
       messages: [{ role: 'user', content: userMessage }],
     }),
   });
-  if (!resp.ok) {
-    const err = await resp.json().catch(()=>({}));
-    throw new Error(err?.error?.message || 'API error ' + resp.status);
-  }
   const data = await resp.json();
-  return data.content?.[0]?.text || '(Tidak ada respon)';
+  if (!resp.ok) {
+    const msg = data?.error?.message || ('API error ' + resp.status);
+    throw new Error(msg);
+  }
+  return data.content?.[0]?.text || '(Tidak ada respon dari AI)';
 }
+
+// Save API key to localStorage
+window.saveApiKey = (val) => {
+  CLAUDE_API_KEY = val.trim();
+  localStorage.setItem('devpm_ai_key', CLAUDE_API_KEY);
+  const status = document.getElementById('apiKeyStatus');
+  if (val.length > 20) {
+    if(status) { status.textContent = '✅ Tersimpan'; status.style.color = 'var(--accent)'; }
+    document.getElementById('apiKeyBanner').style.borderColor = 'rgba(57,255,20,0.3)';
+    document.getElementById('apiKeyBanner').style.background = 'rgba(57,255,20,0.06)';
+  } else {
+    if(status) { status.textContent = ''; }
+  }
+};
 
 // ── helper: kumpulkan data project/task untuk konteks AI ──
 async function collectProjectContext(projIdFilter = '') {
@@ -2882,6 +2900,17 @@ let aiChatHistory = [];
 
 window.openAiPanel = () => {
   document.getElementById('modalAiAssistant').classList.add('show');
+  // Load saved API key into input
+  const savedKey = localStorage.getItem('devpm_ai_key') || '';
+  const keyInput = document.getElementById('aiApiKeyInput');
+  if (keyInput && savedKey && savedKey !== 'GANTI_DENGAN_API_KEY_KAMU') {
+    keyInput.value = savedKey;
+    CLAUDE_API_KEY = savedKey;
+    const banner = document.getElementById('apiKeyBanner');
+    const status = document.getElementById('apiKeyStatus');
+    if (banner) { banner.style.borderColor='rgba(57,255,20,0.3)'; banner.style.background='rgba(57,255,20,0.06)'; }
+    if (status) { status.textContent='✅ Tersimpan'; status.style.color='var(--accent)'; }
+  }
   if (!aiChatHistory.length) {
     appendAiMsg('bot', `Halo ${currentName}! 👋 Saya AI Assistant Dev PM. Saya bisa bantu kamu:
 • Cek status project dan task
@@ -2959,7 +2988,7 @@ Maksimal 300 kata per jawaban. Gunakan emoji secukupnya.`;
     loadingEl.textContent = reply;
   } catch(e) {
     loadingEl.classList.remove('loading');
-    loadingEl.textContent = '❌ Error: ' + e.message + '\nPastikan API key sudah diisi di kode.';
+    loadingEl.textContent = '❌ ' + e.message;
   }
   document.getElementById('btnSendAi').disabled = false;
   document.getElementById('aiChatMessages').scrollTop = 9999;
@@ -3046,10 +3075,18 @@ function populateAiDropdowns() {
     <button class="modal-close" onclick="closeModal('modalAiAssistant')">✕</button>
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;">
       <div style="width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--accent),var(--cyan));display:grid;place-items:center;font-size:18px;flex-shrink:0;">🤖</div>
-      <div>
+      <div style="flex:1;">
         <div class="modal-title" style="font-size:20px;margin-bottom:0;">AI Assistant</div>
         <div class="modal-sub" style="margin-bottom:0;">Tanya apapun tentang project &amp; task kamu</div>
       </div>
+    </div>
+    <div id="apiKeyBanner" style="margin:12px 0 0;display:flex;gap:8px;align-items:center;background:rgba(255,170,0,0.1);border:1px solid rgba(255,170,0,0.3);border-radius:10px;padding:10px 14px;">
+      <span style="font-size:12px;color:var(--orange);flex-shrink:0;">🔑 API Key:</span>
+      <input type="password" id="aiApiKeyInput" placeholder="sk-ant-..." 
+        style="flex:1;background:rgba(255,255,255,0.07);border:1px solid var(--border2);color:var(--text);
+        font-family:'Inter',sans-serif;font-size:12px;padding:6px 10px;border-radius:8px;outline:none;"
+        oninput="saveApiKey(this.value)">
+      <span id="apiKeyStatus" style="font-size:11px;color:var(--text3);white-space:nowrap;"></span>
     </div>
 
     <!-- Chat area -->
