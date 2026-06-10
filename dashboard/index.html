@@ -2185,13 +2185,16 @@ window.showSection=(section,btn)=>{
 
 // Admin Tab Switch
 window.switchAdminTab=(tab)=>{
-  ['log','notif','export','settings'].forEach(t=>{
-    document.getElementById('admin-'+t).style.display=t===tab?'':'none';
-    document.getElementById('tab-'+t).classList.toggle('active',t===tab);
+  ['log','notif','export','settings','ai'].forEach(t=>{
+    const el=document.getElementById('admin-'+t);
+    const tb=document.getElementById('tab-'+t);
+    if(el) el.style.display=t===tab?'':'none';
+    if(tb) tb.classList.toggle('active',t===tab);
   });
   if(tab==='log') loadActivityLog();
   if(tab==='notif'){ loadNotifLog(); populateNotifFilters(); }
   if(tab==='settings') loadSettings();
+  if(tab==='ai') populateAiDropdowns();
 };
 
 // Populate filter dropdowns di tab notif
@@ -2658,85 +2661,7 @@ window.saveQuickUpdate=async()=>{
 };
 window.closeModal=(id)=>document.getElementById(id).classList.remove('show');
 document.querySelectorAll('.modal-overlay').forEach(el=>el.addEventListener('click',e=>{if(e.target===el)el.classList.remove('show');}));
-</script>
-<!-- MODAL: Quick Update Buyer/Factory -->
-<div class="modal-overlay" id="modalQuickUpdate">
-  <div class="modal" style="max-width:420px">
-    <button class="modal-close" onclick="closeModal('modalQuickUpdate')">✕</button>
-    <div class="modal-title" style="font-size:20px">Update Buyer & Factory</div>
-    <div class="modal-sub" id="quickUpdateSub">Isi data buyer dan factory untuk project ini</div>
-    <input type="hidden" id="quickUpdateProjId">
-    <div class="form-group">
-      <label class="form-label">Buyer / Klien</label>
-      <select class="form-select" id="quick-buyer" onchange="handleBuyerChange('quick')">
-        <option value="">— Pilih Buyer —</option>
-        <option value="amd" data-factory="kopo">AMD</option>
-        <option value="bionic" data-factory="kopo">Bionic</option>
-        <option value="callaway" data-factory="katapang">Callaway</option>
-        <option value="first tactical" data-factory="kopo">First Tactical</option>
-        <option value="ghost" data-factory="kopo">Ghost</option>
-        <option value="puma" data-factory="kopo">Puma</option>
-        <option value="rlf" data-factory="kopo">RLF</option>
-        <option value="taylormade" data-factory="kopo">TaylorMade</option>
-        <option value="travis mathew" data-factory="katapang">Travis Mathew</option>
-        <option value="verb" data-factory="kopo">Verb</option>
-        <option value="others">Others (isi sendiri)</option>
-      </select>
-      <input class="form-input" type="text" id="quick-buyer-custom" placeholder="Nama buyer lainnya..." style="display:none;margin-top:8px;">
-    </div>
-    <div class="form-group">
-      <label class="form-label">Factory</label>
-      <select class="form-select" id="quick-factory">
-        <option value="">— Pilih Factory —</option>
-        <option value="katapang">Katapang</option>
-        <option value="kopo">Kopo</option>
-      </select>
-    </div>
-    <div class="form-actions">
-      <button class="btn-cancel" onclick="closeModal('modalQuickUpdate')">Batal</button>
-      <button class="btn-primary" onclick="saveQuickUpdate()">Simpan</button>
-    </div>
-  </div>
-</div>
 
-
-<!-- AI ASSISTANT PANEL (semua user) -->
-<div class="modal-overlay" id="modalAiAssistant">
-  <div class="modal" style="max-width:600px;max-height:85vh;display:flex;flex-direction:column;">
-    <button class="modal-close" onclick="closeModal('modalAiAssistant')">✕</button>
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;">
-      <div style="width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--accent),var(--cyan));display:grid;place-items:center;font-size:18px;flex-shrink:0;">🤖</div>
-      <div>
-        <div class="modal-title" style="font-size:20px;margin-bottom:0;">AI Assistant</div>
-        <div class="modal-sub" style="margin-bottom:0;">Tanya apapun tentang project &amp; task kamu</div>
-      </div>
-    </div>
-
-    <!-- Chat area -->
-    <div id="aiChatMessages" style="flex:1;overflow-y:auto;margin:16px 0;display:flex;flex-direction:column;gap:10px;min-height:200px;max-height:400px;padding-right:4px;"></div>
-
-    <!-- Suggested prompts -->
-    <div id="aiSuggestions" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;">
-      <button class="ai-suggest-btn" onclick="aiQuickAsk(this)">📋 Ringkasan project aktif</button>
-      <button class="ai-suggest-btn" onclick="aiQuickAsk(this)">⚠️ Task overdue saya</button>
-      <button class="ai-suggest-btn" onclick="aiQuickAsk(this)">📊 Progress semua divisi</button>
-      <button class="ai-suggest-btn" onclick="aiQuickAsk(this)">🏆 PIC dengan KPI terbaik</button>
-    </div>
-
-    <!-- Input area -->
-    <div style="display:flex;gap:8px;align-items:flex-end;">
-      <textarea id="aiChatInput" placeholder="Tanya sesuatu... misal: project mana yang paling kritis minggu ini?" rows="2"
-        style="flex:1;background:rgba(255,255,255,0.05);border:1px solid var(--border2);color:var(--text);
-        font-family:'Inter',sans-serif;font-size:13px;padding:10px 14px;border-radius:10px;resize:none;outline:none;line-height:1.6;"
-        onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendAiMessage();}"></textarea>
-      <button onclick="sendAiMessage()" id="btnSendAi"
-        style="padding:10px 18px;border-radius:10px;background:linear-gradient(135deg,var(--accent),var(--cyan));
-        color:#000;border:none;cursor:pointer;font-weight:700;font-size:16px;height:44px;flex-shrink:0;">➤</button>
-    </div>
-  </div>
-</div>
-
-<script>
 
 // ══════════════════════════════════════════════════════
 // AI INTEGRATION — Claude API
@@ -3071,17 +2996,85 @@ function populateAiDropdowns() {
   }
 }
 
-// ── Patch switchAdminTab to include 'ai' ──
-const _origSwitchAdminTab = window.switchAdminTab;
-window.switchAdminTab = (tab) => {
-  _origSwitchAdminTab(tab);
-  const aiDiv = document.getElementById('admin-ai');
-  if (aiDiv) aiDiv.style.display = tab==='ai' ? '' : 'none';
-  const tabEl = document.getElementById('tab-ai');
-  if (tabEl) tabEl.classList.toggle('active', tab==='ai');
-  if (tab==='ai') populateAiDropdowns();
-};
+
 
 </script>
+<!-- MODAL: Quick Update Buyer/Factory -->
+<div class="modal-overlay" id="modalQuickUpdate">
+  <div class="modal" style="max-width:420px">
+    <button class="modal-close" onclick="closeModal('modalQuickUpdate')">✕</button>
+    <div class="modal-title" style="font-size:20px">Update Buyer & Factory</div>
+    <div class="modal-sub" id="quickUpdateSub">Isi data buyer dan factory untuk project ini</div>
+    <input type="hidden" id="quickUpdateProjId">
+    <div class="form-group">
+      <label class="form-label">Buyer / Klien</label>
+      <select class="form-select" id="quick-buyer" onchange="handleBuyerChange('quick')">
+        <option value="">— Pilih Buyer —</option>
+        <option value="amd" data-factory="kopo">AMD</option>
+        <option value="bionic" data-factory="kopo">Bionic</option>
+        <option value="callaway" data-factory="katapang">Callaway</option>
+        <option value="first tactical" data-factory="kopo">First Tactical</option>
+        <option value="ghost" data-factory="kopo">Ghost</option>
+        <option value="puma" data-factory="kopo">Puma</option>
+        <option value="rlf" data-factory="kopo">RLF</option>
+        <option value="taylormade" data-factory="kopo">TaylorMade</option>
+        <option value="travis mathew" data-factory="katapang">Travis Mathew</option>
+        <option value="verb" data-factory="kopo">Verb</option>
+        <option value="others">Others (isi sendiri)</option>
+      </select>
+      <input class="form-input" type="text" id="quick-buyer-custom" placeholder="Nama buyer lainnya..." style="display:none;margin-top:8px;">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Factory</label>
+      <select class="form-select" id="quick-factory">
+        <option value="">— Pilih Factory —</option>
+        <option value="katapang">Katapang</option>
+        <option value="kopo">Kopo</option>
+      </select>
+    </div>
+    <div class="form-actions">
+      <button class="btn-cancel" onclick="closeModal('modalQuickUpdate')">Batal</button>
+      <button class="btn-primary" onclick="saveQuickUpdate()">Simpan</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- AI ASSISTANT PANEL (semua user) -->
+<div class="modal-overlay" id="modalAiAssistant">
+  <div class="modal" style="max-width:600px;max-height:85vh;display:flex;flex-direction:column;">
+    <button class="modal-close" onclick="closeModal('modalAiAssistant')">✕</button>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;">
+      <div style="width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--accent),var(--cyan));display:grid;place-items:center;font-size:18px;flex-shrink:0;">🤖</div>
+      <div>
+        <div class="modal-title" style="font-size:20px;margin-bottom:0;">AI Assistant</div>
+        <div class="modal-sub" style="margin-bottom:0;">Tanya apapun tentang project &amp; task kamu</div>
+      </div>
+    </div>
+
+    <!-- Chat area -->
+    <div id="aiChatMessages" style="flex:1;overflow-y:auto;margin:16px 0;display:flex;flex-direction:column;gap:10px;min-height:200px;max-height:400px;padding-right:4px;"></div>
+
+    <!-- Suggested prompts -->
+    <div id="aiSuggestions" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;">
+      <button class="ai-suggest-btn" onclick="aiQuickAsk(this)">📋 Ringkasan project aktif</button>
+      <button class="ai-suggest-btn" onclick="aiQuickAsk(this)">⚠️ Task overdue saya</button>
+      <button class="ai-suggest-btn" onclick="aiQuickAsk(this)">📊 Progress semua divisi</button>
+      <button class="ai-suggest-btn" onclick="aiQuickAsk(this)">🏆 PIC dengan KPI terbaik</button>
+    </div>
+
+    <!-- Input area -->
+    <div style="display:flex;gap:8px;align-items:flex-end;">
+      <textarea id="aiChatInput" placeholder="Tanya sesuatu... misal: project mana yang paling kritis minggu ini?" rows="2"
+        style="flex:1;background:rgba(255,255,255,0.05);border:1px solid var(--border2);color:var(--text);
+        font-family:'Inter',sans-serif;font-size:13px;padding:10px 14px;border-radius:10px;resize:none;outline:none;line-height:1.6;"
+        onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendAiMessage();}"></textarea>
+      <button onclick="sendAiMessage()" id="btnSendAi"
+        style="padding:10px 18px;border-radius:10px;background:linear-gradient(135deg,var(--accent),var(--cyan));
+        color:#000;border:none;cursor:pointer;font-weight:700;font-size:16px;height:44px;flex-shrink:0;">➤</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
