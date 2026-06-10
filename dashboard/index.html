@@ -473,6 +473,36 @@ body { padding-top: env(safe-area-inset-top); }
 .status-badge.red{background:var(--red-dim);color:var(--red);}
 .status-badge.orange{background:var(--orange-dim);color:var(--orange);}
 
+
+/* ── AI COMPONENTS ── */
+.ai-suggest-btn {
+  padding:6px 12px;border-radius:20px;
+  background:rgba(57,255,20,0.08);
+  border:1px solid rgba(57,255,20,0.2);
+  color:var(--accent);font-size:11px;font-weight:500;
+  cursor:pointer;font-family:'Inter',sans-serif;
+  transition:all 0.2s;white-space:nowrap;
+}
+.ai-suggest-btn:hover{background:rgba(57,255,20,0.15);border-color:rgba(57,255,20,0.4);}
+
+.ai-msg-user {
+  align-self:flex-end;max-width:85%;
+  background:rgba(57,255,20,0.1);border:1px solid rgba(57,255,20,0.2);
+  color:var(--text);padding:10px 14px;border-radius:12px 12px 4px 12px;
+  font-size:12px;line-height:1.7;
+}
+.ai-msg-bot {
+  align-self:flex-start;max-width:92%;
+  background:rgba(255,255,255,0.05);border:1px solid var(--border);
+  color:var(--text2);padding:12px 16px;border-radius:12px 12px 12px 4px;
+  font-size:12px;line-height:1.8;white-space:pre-wrap;
+}
+.ai-msg-bot.loading { color:var(--text3); font-style:italic; }
+.ai-msg-label {
+  font-size:10px;font-weight:600;letter-spacing:0.1em;
+  color:var(--text3);text-transform:uppercase;margin-bottom:4px;
+}
+
 @media(max-width:900px){
   .sidebar{display:none;}
   .main-area{margin-left:0;}
@@ -506,6 +536,9 @@ body { padding-top: env(safe-area-inset-top); }
     </button>
     <button class="nav-item" id="btnAdminNav" style="display:none" onclick="showSection('admin',this)" title="Admin">
       <span class="icon">⚙️</span>
+    </button>
+    <button class="nav-item" id="btnAiNav" onclick="openAiPanel()" title="AI Assistant">
+      <span class="icon">🤖</span>
     </button>
   </div>
 
@@ -708,6 +741,7 @@ body { padding-top: env(safe-area-inset-top); }
         <button class="admin-tab" onclick="switchAdminTab('notif')" id="tab-notif">🔔 Notifikasi</button>
         <button class="admin-tab" onclick="switchAdminTab('export')" id="tab-export">📥 Export Data</button>
         <button class="admin-tab" onclick="switchAdminTab('settings')" id="tab-settings">⚙️ Pengaturan</button>
+        <button class="admin-tab" onclick="switchAdminTab('ai')" id="tab-ai">🤖 AI Tools</button>
       </div>
 
       <!-- TAB: Log Aktivitas -->
@@ -882,6 +916,57 @@ body { padding-top: env(safe-area-inset-top); }
           <button class="btn-primary" onclick="saveSettings()" style="padding:13px;font-size:14px;">💾 Simpan Pengaturan</button>
         </div>
       </div>
+
+      <!-- TAB: AI Tools -->
+      <div id="admin-ai" style="display:none">
+        <div style="margin-bottom:24px;">
+          <div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:18px;font-weight:700;margin-bottom:4px;">🤖 AI Tools</div>
+          <div style="font-size:12px;color:var(--text3);">Powered by Claude AI — analisis project, notifikasi cerdas, dan laporan otomatis</div>
+        </div>
+
+        <!-- RISK ANALYZER -->
+        <div class="kpi-card" style="margin-bottom:20px;border:1px solid rgba(255,170,0,0.3);">
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:12px;">
+            <div>
+              <div style="font-size:14px;font-weight:700;color:var(--orange);">⚠️ Risk Analyzer</div>
+              <div style="font-size:11px;color:var(--text3);margin-top:2px;">AI analisis semua project dan identifikasi risiko overdue</div>
+            </div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+              <select class="form-select" id="riskProjFilter" style="padding:8px 14px;font-size:12px;min-width:180px;"><option value="">Semua Project</option></select>
+              <button class="btn-primary" onclick="runRiskAnalyzer()" id="btnRiskAnalyze" style="padding:10px 20px;font-size:13px;background:linear-gradient(135deg,var(--orange),#ff6b00);flex:none;">🔍 Analisis Sekarang</button>
+            </div>
+          </div>
+          <div id="riskResult" style="font-size:12px;color:var(--text2);line-height:1.9;white-space:pre-wrap;border-top:1px solid var(--border);padding-top:12px;display:none;"></div>
+        </div>
+
+        <!-- SMART NOTIF GENERATOR -->
+        <div class="kpi-card" style="margin-bottom:20px;border:1px solid rgba(0,229,204,0.3);">
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:12px;">
+            <div>
+              <div style="font-size:14px;font-weight:700;color:var(--cyan);">✉️ Smart Notifikasi AI</div>
+              <div style="font-size:11px;color:var(--text3);margin-top:2px;">AI tulis pesan email personal dan kontekstual per PIC</div>
+            </div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+              <select class="form-select" id="smartNotifPic" style="padding:8px 14px;font-size:12px;min-width:160px;"><option value="">— Pilih PIC —</option></select>
+              <button class="btn-primary" onclick="generateSmartNotif()" id="btnSmartNotif" style="padding:10px 20px;font-size:13px;background:linear-gradient(135deg,var(--cyan),#0099aa);color:#000;flex:none;">✨ Generate Pesan</button>
+            </div>
+          </div>
+          <div id="smartNotifResult" style="font-size:12px;color:var(--text2);line-height:1.9;border-top:1px solid var(--border);padding-top:12px;display:none;"></div>
+        </div>
+
+        <!-- AI WEEKLY REPORT -->
+        <div class="kpi-card" style="border:1px solid rgba(57,255,20,0.3);">
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:12px;">
+            <div>
+              <div style="font-size:14px;font-weight:700;color:var(--accent);">📊 Laporan Mingguan AI</div>
+              <div style="font-size:11px;color:var(--text3);margin-top:2px;">AI rangkum status semua project dalam format laporan eksekutif</div>
+            </div>
+            <button class="btn-primary" onclick="generateWeeklyReport()" id="btnWeeklyReport" style="padding:10px 20px;font-size:13px;flex:none;">📝 Generate Laporan</button>
+          </div>
+          <div id="weeklyReportResult" style="font-size:12px;color:var(--text2);line-height:1.9;white-space:pre-wrap;border-top:1px solid var(--border);padding-top:12px;display:none;"></div>
+        </div>
+      </div>
+
     </section>
 
   </div>
@@ -1226,8 +1311,6 @@ window.sendEmailNotif=async(isAuto=false)=>{
         to_name:pic,
         to_email:PIC_EMAILS[pic],
         email:PIC_EMAILS[pic],
-        reply_to:'noreply@asiglovemail.com',
-        from_name:'Dev PM System',
         summary,task_list:taskLines,total_task:tasks.length,
         sent_by:currentName||'Admin',
         sent_time:new Date().toLocaleString('id-ID'),
@@ -2616,5 +2699,389 @@ document.querySelectorAll('.modal-overlay').forEach(el=>el.addEventListener('cli
   </div>
 </div>
 
+
+<!-- AI ASSISTANT PANEL (semua user) -->
+<div class="modal-overlay" id="modalAiAssistant">
+  <div class="modal" style="max-width:600px;max-height:85vh;display:flex;flex-direction:column;">
+    <button class="modal-close" onclick="closeModal('modalAiAssistant')">✕</button>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;">
+      <div style="width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--accent),var(--cyan));display:grid;place-items:center;font-size:18px;flex-shrink:0;">🤖</div>
+      <div>
+        <div class="modal-title" style="font-size:20px;margin-bottom:0;">AI Assistant</div>
+        <div class="modal-sub" style="margin-bottom:0;">Tanya apapun tentang project &amp; task kamu</div>
+      </div>
+    </div>
+
+    <!-- Chat area -->
+    <div id="aiChatMessages" style="flex:1;overflow-y:auto;margin:16px 0;display:flex;flex-direction:column;gap:10px;min-height:200px;max-height:400px;padding-right:4px;"></div>
+
+    <!-- Suggested prompts -->
+    <div id="aiSuggestions" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;">
+      <button class="ai-suggest-btn" onclick="aiQuickAsk(this)">📋 Ringkasan project aktif</button>
+      <button class="ai-suggest-btn" onclick="aiQuickAsk(this)">⚠️ Task overdue saya</button>
+      <button class="ai-suggest-btn" onclick="aiQuickAsk(this)">📊 Progress semua divisi</button>
+      <button class="ai-suggest-btn" onclick="aiQuickAsk(this)">🏆 PIC dengan KPI terbaik</button>
+    </div>
+
+    <!-- Input area -->
+    <div style="display:flex;gap:8px;align-items:flex-end;">
+      <textarea id="aiChatInput" placeholder="Tanya sesuatu... misal: project mana yang paling kritis minggu ini?" rows="2"
+        style="flex:1;background:rgba(255,255,255,0.05);border:1px solid var(--border2);color:var(--text);
+        font-family:'Inter',sans-serif;font-size:13px;padding:10px 14px;border-radius:10px;resize:none;outline:none;line-height:1.6;"
+        onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendAiMessage();}"></textarea>
+      <button onclick="sendAiMessage()" id="btnSendAi"
+        style="padding:10px 18px;border-radius:10px;background:linear-gradient(135deg,var(--accent),var(--cyan));
+        color:#000;border:none;cursor:pointer;font-weight:700;font-size:16px;height:44px;flex-shrink:0;">➤</button>
+    </div>
+  </div>
+</div>
+
+<script>
+
+// ══════════════════════════════════════════════════════
+// AI INTEGRATION — Claude API
+// ══════════════════════════════════════════════════════
+const CLAUDE_API_KEY = 'GANTI_DENGAN_API_KEY_KAMU'; // ← isi API key Anthropic di sini
+const CLAUDE_MODEL   = 'claude-sonnet-4-20250514';
+
+async function callClaude(systemPrompt, userMessage) {
+  const resp = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': CLAUDE_API_KEY,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true',
+    },
+    body: JSON.stringify({
+      model: CLAUDE_MODEL,
+      max_tokens: 1000,
+      system: systemPrompt,
+      messages: [{ role: 'user', content: userMessage }],
+    }),
+  });
+  if (!resp.ok) {
+    const err = await resp.json().catch(()=>({}));
+    throw new Error(err?.error?.message || 'API error ' + resp.status);
+  }
+  const data = await resp.json();
+  return data.content?.[0]?.text || '(Tidak ada respon)';
+}
+
+// ── helper: kumpulkan data project/task untuk konteks AI ──
+async function collectProjectContext(projIdFilter = '') {
+  const today = new Date(); today.setHours(0,0,0,0);
+  const lines = [];
+  const projs = projIdFilter
+    ? [projectsCache[projIdFilter]].filter(Boolean)
+    : Object.values(projectsCache);
+
+  for (const proj of projs) {
+    try {
+      const snap = await getDocs(collection(db,'projects',proj.id,'tasks'));
+      const tasks = snap.docs.map(d => d.data());
+      const done  = tasks.filter(t => t.status==='done').length;
+      const overdue = tasks.filter(t => t.status!=='done' && t.deadline && new Date(t.deadline)<today);
+      const pct   = tasks.length ? Math.round(done/tasks.length*100) : 0;
+      lines.push(`PROJECT: ${proj.name} (${proj.kode||'-'}) | Buyer: ${proj.buyer||'-'} | Progress: ${pct}% (${done}/${tasks.length}) | Overdue: ${overdue.length}`);
+      overdue.slice(0,5).forEach(t => {
+        const diff = Math.ceil((new Date(t.deadline)-today)/86400000);
+        lines.push(`  - OVERDUE ${Math.abs(diff)} hari: [${t.division}] ${t.name} | PIC: ${(t.pics||[]).join(', ')}`);
+      });
+      const pending = tasks.filter(t => t.status!=='done' && t.deadline && new Date(t.deadline)>=today);
+      pending.slice(0,3).forEach(t => {
+        const diff = Math.ceil((new Date(t.deadline)-today)/86400000);
+        lines.push(`  - Pending H-${diff}: [${t.division}] ${t.name} | PIC: ${(t.pics||[]).join(', ')}`);
+      });
+    } catch(e) {}
+  }
+  return lines.join('\n') || 'Tidak ada data project.';
+}
+
+// ─────────────────────────────────────────
+// 1. AI RISK ANALYZER
+// ─────────────────────────────────────────
+window.runRiskAnalyzer = async () => {
+  const btn = document.getElementById('btnRiskAnalyze');
+  const resultEl = document.getElementById('riskResult');
+  const projFilter = document.getElementById('riskProjFilter')?.value || '';
+
+  btn.disabled = true; btn.textContent = '⏳ Menganalisis...';
+  resultEl.style.display = 'block';
+  resultEl.textContent = 'AI sedang membaca data semua project...';
+
+  try {
+    const ctx = await collectProjectContext(projFilter);
+    const today = new Date().toLocaleDateString('id-ID',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+
+    const system = `Kamu adalah analis project management untuk perusahaan garment Adira Semesta Industry.
+Tugasmu menganalisis data project development dan memberikan laporan risiko yang ringkas, actionable, dan dalam Bahasa Indonesia.
+Format output:
+1. Ringkasan singkat kondisi keseluruhan (1-2 kalimat)
+2. Project dengan risiko tertinggi (maks 3 project, sebutkan alasannya)
+3. PIC yang perlu segera di-follow up (maks 5 nama)
+4. Rekomendasi tindakan konkret (3 poin)
+Gunakan emoji untuk keterbacaan. Jawaban maksimal 400 kata.`;
+
+    const result = await callClaude(system,
+      `Hari ini: ${today}\n\nData project:\n${ctx}\n\nBerikan analisis risiko sekarang.`);
+
+    resultEl.textContent = result;
+  } catch(e) {
+    resultEl.textContent = '❌ Error: ' + e.message + '\n\nPastikan CLAUDE_API_KEY sudah diisi dengan benar.';
+  }
+  btn.disabled = false; btn.textContent = '🔍 Analisis Sekarang';
+};
+
+// ─────────────────────────────────────────
+// 2. SMART NOTIFIKASI AI
+// ─────────────────────────────────────────
+window.generateSmartNotif = async () => {
+  const btn    = document.getElementById('btnSmartNotif');
+  const resultEl = document.getElementById('smartNotifResult');
+  const picName  = document.getElementById('smartNotifPic')?.value;
+
+  if (!picName) { alert('Pilih PIC terlebih dahulu.'); return; }
+
+  btn.disabled = true; btn.textContent = '⏳ Menulis pesan...';
+  resultEl.style.display = 'block';
+  resultEl.innerHTML = '<em style="color:var(--text3)">AI sedang menulis pesan personal...</em>';
+
+  try {
+    const today = new Date(); today.setHours(0,0,0,0);
+    const picTasks = [];
+    for (const proj of Object.values(projectsCache)) {
+      try {
+        const snap = await getDocs(collection(db,'projects',proj.id,'tasks'));
+        snap.forEach(d => {
+          const t = d.data();
+          if (t.status==='done') return;
+          if (!(t.pics||[]).includes(picName)) return;
+          const dl = t.deadline ? new Date(t.deadline) : null;
+          const diff = dl ? Math.ceil((dl-today)/86400000) : null;
+          picTasks.push({ name:t.name, proj:proj.name, kode:proj.kode||'', division:t.division, diff, deadline:t.deadline||'belum ada' });
+        });
+      } catch(e) {}
+    }
+
+    if (!picTasks.length) {
+      resultEl.innerHTML = `<span style="color:var(--accent)">✅ ${picName} tidak punya task yang belum selesai. Tidak perlu notifikasi!</span>`;
+      btn.disabled = false; btn.textContent = '✨ Generate Pesan'; return;
+    }
+
+    const taskList = picTasks.map(t => {
+      const status = t.diff===null ? 'belum ada deadline' : t.diff<0 ? `OVERDUE ${Math.abs(t.diff)} hari` : t.diff===0 ? 'HARI INI' : `${t.diff} hari lagi`;
+      return `- [${t.division}] ${t.name} (${t.proj}${t.kode?' '+t.kode:''}) — ${status}`;
+    }).join('\n');
+
+    const system = `Kamu adalah asisten HR/Project Manager yang menulis pesan WhatsApp/email pengingat task kepada karyawan.
+Gaya penulisan: hangat, profesional, tidak menghakimi, tapi tegas dan jelas mengenai urgensi.
+Tulis dalam Bahasa Indonesia yang natural. Gunakan nama PIC di awal pesan.
+Sertakan daftar task dalam format yang rapi dan mudah dibaca.
+Akhiri dengan kalimat motivasi singkat.
+Maksimal 200 kata.`;
+
+    const result = await callClaude(system,
+      `Tulis pesan pengingat task untuk ${picName}.\n\nDaftar task belum selesai:\n${taskList}`);
+
+    resultEl.innerHTML = `
+      <div style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:10px;white-space:pre-wrap;">${result}</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button onclick="copyAiText('smartNotifResult')" style="padding:6px 14px;border-radius:8px;background:var(--accent-dim);border:1px solid rgba(57,255,20,0.3);color:var(--accent);font-size:11px;cursor:pointer;font-family:'Inter',sans-serif;">📋 Copy Pesan</button>
+        <span style="font-size:11px;color:var(--text3);align-self:center;">${picTasks.length} task belum selesai</span>
+      </div>`;
+  } catch(e) {
+    resultEl.textContent = '❌ Error: ' + e.message;
+  }
+  btn.disabled = false; btn.textContent = '✨ Generate Pesan';
+};
+
+// ─────────────────────────────────────────
+// 3. LAPORAN MINGGUAN AI
+// ─────────────────────────────────────────
+window.generateWeeklyReport = async () => {
+  const btn = document.getElementById('btnWeeklyReport');
+  const resultEl = document.getElementById('weeklyReportResult');
+
+  btn.disabled = true; btn.textContent = '⏳ Membuat laporan...';
+  resultEl.style.display = 'block';
+  resultEl.textContent = 'AI sedang menganalisis semua data project...';
+
+  try {
+    const ctx = await collectProjectContext();
+    const today = new Date().toLocaleDateString('id-ID',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+
+    const system = `Kamu adalah asisten project manager senior di perusahaan garment Adira Semesta Industry.
+Tugasmu membuat laporan eksekutif mingguan dalam Bahasa Indonesia yang profesional dan informatif.
+Format laporan:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📋 LAPORAN STATUS PROJECT
+[Tanggal]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📌 RINGKASAN EKSEKUTIF
+[2-3 kalimat gambaran keseluruhan]
+
+✅ PROJECT BERJALAN BAIK
+[Daftar project dengan progress bagus]
+
+🔴 PROJECT MEMERLUKAN PERHATIAN
+[Project bermasalah + alasan]
+
+👥 PERFORMA TIM
+[Divisi/PIC yang perlu perhatian]
+
+📋 REKOMENDASI MINGGU INI
+[3-5 action item konkret]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Maksimal 500 kata. Gunakan data yang diberikan.`;
+
+    const result = await callClaude(system,
+      `Tanggal laporan: ${today}\n\nData semua project:\n${ctx}\n\nBuat laporan eksekutif mingguan.`);
+
+    resultEl.innerHTML = `
+      <div style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:10px;white-space:pre-wrap;font-family:'Inter',monospace;">${result}</div>
+      <div style="display:flex;gap:8px;">
+        <button onclick="copyAiText('weeklyReportResult')" style="padding:6px 14px;border-radius:8px;background:var(--accent-dim);border:1px solid rgba(57,255,20,0.3);color:var(--accent);font-size:11px;cursor:pointer;font-family:'Inter',sans-serif;">📋 Copy Laporan</button>
+      </div>`;
+  } catch(e) {
+    resultEl.textContent = '❌ Error: ' + e.message;
+  }
+  btn.disabled = false; btn.textContent = '📝 Generate Laporan';
+};
+
+// ─────────────────────────────────────────
+// 4. AI ASSISTANT (Chat untuk semua user)
+// ─────────────────────────────────────────
+let aiChatHistory = [];
+
+window.openAiPanel = () => {
+  document.getElementById('modalAiAssistant').classList.add('show');
+  if (!aiChatHistory.length) {
+    appendAiMsg('bot', `Halo ${currentName}! 👋 Saya AI Assistant Dev PM. Saya bisa bantu kamu:
+• Cek status project dan task
+• Lihat task overdue
+• Analisis progress divisi
+• Dan banyak lagi!
+
+Mau tanya apa?`);
+  }
+};
+
+function appendAiMsg(role, text) {
+  const wrap = document.getElementById('aiChatMessages');
+  const div = document.createElement('div');
+  div.className = role === 'user' ? 'ai-msg-user' : 'ai-msg-bot';
+  div.textContent = text;
+  wrap.appendChild(div);
+  wrap.scrollTop = wrap.scrollHeight;
+  return div;
+}
+
+window.aiQuickAsk = (btn) => {
+  document.getElementById('aiChatInput').value = btn.textContent.replace(/^[^ ]+ /,'').trim();
+  document.getElementById('aiSuggestions').style.display = 'none';
+  sendAiMessage();
+};
+
+window.sendAiMessage = async () => {
+  const input = document.getElementById('aiChatInput');
+  const msg = input.value.trim();
+  if (!msg) return;
+  input.value = '';
+  document.getElementById('aiSuggestions').style.display = 'none';
+
+  appendAiMsg('user', msg);
+  const loadingEl = appendAiMsg('bot', '⏳ Sedang membaca data...');
+  loadingEl.classList.add('loading');
+  document.getElementById('btnSendAi').disabled = true;
+
+  try {
+    const ctx = await collectProjectContext();
+    const today = new Date().toLocaleDateString('id-ID',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+    const system = `Kamu adalah AI assistant untuk Dev PM — sistem project management Adira Semesta Industry.
+User saat ini: ${currentName}, Divisi: ${currentDiv}, Role: ${currentRole}.
+Hari ini: ${today}.
+
+Data project terkini:
+${ctx}
+
+Jawab pertanyaan user dalam Bahasa Indonesia yang natural, ringkas, dan informatif.
+Jika user adalah PIC (bukan admin), fokus pada data yang relevan dengan divisi mereka: ${currentDiv}.
+Jika user adalah admin, berikan gambaran menyeluruh.
+Maksimal 300 kata per jawaban. Gunakan emoji secukupnya.`;
+
+    aiChatHistory.push({ role:'user', content: msg });
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': CLAUDE_API_KEY,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true',
+      },
+      body: JSON.stringify({
+        model: CLAUDE_MODEL,
+        max_tokens: 600,
+        system,
+        messages: aiChatHistory.slice(-6),
+      }),
+    });
+    const data = await resp.json();
+    const reply = data.content?.[0]?.text || '(Tidak ada respon)';
+    aiChatHistory.push({ role:'assistant', content: reply });
+    loadingEl.classList.remove('loading');
+    loadingEl.textContent = reply;
+  } catch(e) {
+    loadingEl.classList.remove('loading');
+    loadingEl.textContent = '❌ Error: ' + e.message + '\nPastikan API key sudah diisi di kode.';
+  }
+  document.getElementById('btnSendAi').disabled = false;
+  document.getElementById('aiChatMessages').scrollTop = 9999;
+};
+
+// ─────────────────────────────────────────
+// HELPER: Copy text from AI result element
+// ─────────────────────────────────────────
+window.copyAiText = (elId) => {
+  const el = document.getElementById(elId);
+  const text = el?.querySelector('div')?.textContent || '';
+  navigator.clipboard.writeText(text).then(()=>alert('✅ Teks berhasil dicopy!')).catch(()=>{});
+};
+
+// ─────────────────────────────────────────
+// Populate PIC dropdown for smart notif
+// ─────────────────────────────────────────
+function populateAiDropdowns() {
+  const picSel = document.getElementById('smartNotifPic');
+  if (picSel && picSel.options.length <= 1) {
+    Object.keys(PIC_EMAILS).forEach(name => {
+      const opt = document.createElement('option');
+      opt.value = name; opt.textContent = name;
+      picSel.appendChild(opt);
+    });
+  }
+  const riskSel = document.getElementById('riskProjFilter');
+  if (riskSel && riskSel.options.length <= 1) {
+    Object.values(projectsCache).forEach(p => {
+      const opt = document.createElement('option');
+      opt.value = p.id; opt.textContent = p.name + (p.kode?' ('+p.kode+')':'');
+      riskSel.appendChild(opt);
+    });
+  }
+}
+
+// ── Patch switchAdminTab to include 'ai' ──
+const _origSwitchAdminTab = window.switchAdminTab;
+window.switchAdminTab = (tab) => {
+  _origSwitchAdminTab(tab);
+  const aiDiv = document.getElementById('admin-ai');
+  if (aiDiv) aiDiv.style.display = tab==='ai' ? '' : 'none';
+  const tabEl = document.getElementById('tab-ai');
+  if (tabEl) tabEl.classList.toggle('active', tab==='ai');
+  if (tab==='ai') populateAiDropdowns();
+};
+
+</script>
 </body>
 </html>
