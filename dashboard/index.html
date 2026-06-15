@@ -1311,6 +1311,8 @@ window.sendEmailNotif=async(isAuto=false)=>{
         to_name:pic,
         to_email:PIC_EMAILS[pic],
         email:PIC_EMAILS[pic],
+        reply_to:'noreply@asiglovemail.com',
+        from_name:'Development Project Manager',
         summary,task_list:taskLines,total_task:tasks.length,
         sent_by:currentName||'Admin',
         sent_time:new Date().toLocaleString('id-ID'),
